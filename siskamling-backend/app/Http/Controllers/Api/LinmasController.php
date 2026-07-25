@@ -16,21 +16,6 @@ class LinmasController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role->name === 'polsek') {
-            $perPage = min((int) $request->input('per_page', 15), 50);
-            $anggota = Linmas::latest()->paginate($perPage);
-
-            return response()->json([
-                'data' => LinmasResource::collection($anggota),
-                'meta' => [
-                    'current_page' => $anggota->currentPage(),
-                    'last_page' => $anggota->lastPage(),
-                    'per_page' => $anggota->perPage(),
-                    'total' => $anggota->total(),
-                ],
-            ]);
-        }
-
         $polsekId = $user->getPolsekId();
         if (! $polsekId) {
             return response()->json(['data' => []]);

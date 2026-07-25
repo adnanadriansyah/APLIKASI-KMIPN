@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\PanicResponded;
-use App\Events\PanicTriggered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Panic\RespondPanicRequest;
 use App\Http\Requests\Panic\StorePanicRequest;
@@ -11,6 +9,7 @@ use App\Http\Resources\PanicResource;
 use App\Jobs\SendPanicNotification;
 use App\Models\PanicButtonLog;
 use App\Models\Polsek;
+use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +30,7 @@ class PanicController extends Controller
 
         $panic->load('user.dusun.desa');
 
-        broadcast(new PanicTriggered($panic));
+        app(FirebaseService::class)->pushPanicStatus($panic);
 
         $polsekId = $user->getPolsekId();
         if ($polsekId) {
@@ -73,7 +72,7 @@ class PanicController extends Controller
         $panic->load('respondedBy');
         $panic->load('user.dusun.desa');
 
-        broadcast(new PanicResponded($panic));
+        app(FirebaseService::class)->pushPanicStatus($panic);
 
         return response()->json([
             'message' => 'Panic berhasil direspons.',

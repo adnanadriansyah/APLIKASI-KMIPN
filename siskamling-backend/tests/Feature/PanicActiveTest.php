@@ -135,9 +135,9 @@ class PanicActiveTest extends TestCase
         $this->assertContains($panicOther->id, $ids);
     }
 
-    // ─── POLSEK GLOBAL ACCESS ───────────────────────────────
+    // ─── POLSEK JURISDICTION SCOPING ────────────────────────
 
-    public function test_polsek_sees_all_panic(): void
+    public function test_polsek_sees_panic_in_own_jurisdiction(): void
     {
         $polsekUser = $this->createUser('polsek', null, null, $this->polsek->id);
         $warga = $this->createUser('warga', $this->dusunIds[0]);
@@ -150,7 +150,7 @@ class PanicActiveTest extends TestCase
         $this->assertContains($panic->id, $ids);
     }
 
-    public function test_polsek_can_respond_any_panic(): void
+    public function test_polsek_can_respond_panic_in_own_jurisdiction(): void
     {
         $polsekUser = $this->createUser('polsek', null, null, $this->polsek->id);
         $warga = $this->createUser('warga', $this->dusunIds[0]);
@@ -209,7 +209,7 @@ class PanicActiveTest extends TestCase
         $this->assertEquals([$this->dusunIds[0]], $dusunIds);
     }
 
-    public function test_user_model_get_dusun_ids_polsek(): void
+    public function test_user_model_get_dusun_ids_polsek_scoped_to_jurisdiction(): void
     {
         $polsekUser = $this->createUser('polsek', null, null, $this->polsek->id);
 
@@ -218,11 +218,11 @@ class PanicActiveTest extends TestCase
         $this->assertEqualsCanonicalizing($this->dusunIds, $dusunIds);
     }
 
-    public function test_user_model_get_polsek_id_returns_null_for_polsek(): void
+    public function test_user_model_get_polsek_id_returns_own_polsek_id(): void
     {
         $polsekUser = $this->createUser('polsek', null, null, $this->polsek->id);
 
-        $this->assertNull($polsekUser->getPolsekId());
+        $this->assertEquals($this->polsek->id, $polsekUser->getPolsekId());
     }
 
     public function test_user_model_get_polsek_id_via_desa(): void

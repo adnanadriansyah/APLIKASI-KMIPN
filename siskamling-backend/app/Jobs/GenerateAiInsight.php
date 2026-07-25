@@ -75,7 +75,7 @@ class GenerateAiInsight implements ShouldQueue
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-3-haiku-20240307',
+                    'model' => config('services.anthropic.model'),
                     'max_tokens' => 1024,
                     'system' => 'Kamu adalah asisten analis keamanan desa. '
                         .'Berdasarkan data laporan kamtibmas 7 hari terakhir, buat insight singkat dalam Bahasa Indonesia. '

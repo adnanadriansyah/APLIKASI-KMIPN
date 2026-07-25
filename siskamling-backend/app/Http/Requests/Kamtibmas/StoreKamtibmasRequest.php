@@ -33,7 +33,7 @@ class StoreKamtibmasRequest extends FormRequest
     {
         return [
             'kategori.required' => 'Kategori laporan wajib diisi.',
-            'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari: pencurian, mencurigakan, vandalisme, kebakaran, keributan, atau lainnya.',
+            'kategori.in' => 'Kategori tidak valid. Pilih salah satu dari: '.implode(', ', array_values(config('siskamling.kategori_kamtibmas', []))).'.',
             'kronologi.required' => 'Kronologi kejadian wajib diisi.',
             'kronologi.min' => 'Kronologi kejadian minimal 10 karakter.',
             'kronologi.max' => 'Kronologi kejadian maksimal 5000 karakter.',

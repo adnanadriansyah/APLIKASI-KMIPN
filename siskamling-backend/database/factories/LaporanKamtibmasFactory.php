@@ -17,7 +17,7 @@ class LaporanKamtibmasFactory extends Factory
         return [
             'user_id' => User::factory(),
             'dusun_id' => Dusun::factory(),
-            'kategori' => fake()->randomElement(['pencurian', 'mencurigakan', 'vandalisme', 'kebakaran', 'keributan', 'lainnya']),
+            'kategori' => fake()->randomElement(array_keys(config('siskamling.kategori_kamtibmas', []))),
             'lokasi_text' => fake()->address(),
             'latitude' => fake()->latitude(-5, 6),
             'longitude' => fake()->longitude(95, 141),

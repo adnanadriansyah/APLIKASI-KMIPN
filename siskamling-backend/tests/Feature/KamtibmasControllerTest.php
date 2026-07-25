@@ -228,7 +228,7 @@ class KamtibmasControllerTest extends TestCase
     public function test_filter_by_kategori(): void
     {
         $this->createLaporan($this->warga, $this->dusunIds[0], 'pencurian');
-        $this->createLaporan($this->warga, $this->dusunIds[0], 'kebakaran');
+        $this->createLaporan($this->warga, $this->dusunIds[0], 'begal');
 
         $response = $this->actingAs($this->warga)->getJson('/api/kamtibmas?kategori=pencurian');
 

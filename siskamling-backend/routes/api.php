@@ -65,6 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:polsek');
         Route::get('/desa', [DashboardController::class, 'desaSummary'])
             ->middleware('role:aparatur_desa');
+        Route::get('/warga', [DashboardController::class, 'wargaSummary'])
+            ->middleware('role:warga');
         Route::get('/desa/ai-insight', [DashboardController::class, 'aiInsight'])
             ->middleware('role:aparatur_desa');
         Route::post('/desa/ai-insight/generate', [DashboardController::class, 'generateAiInsight'])

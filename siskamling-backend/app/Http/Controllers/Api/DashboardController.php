@@ -7,6 +7,7 @@ use App\Jobs\GenerateAiInsight;
 use App\Models\AiInsight;
 use App\Models\Dusun;
 use App\Models\JadwalRonda;
+use App\Models\JadwalRondaPetugas;
 use App\Models\LaporanKamtibmas;
 use App\Models\LaporanRumahKosong;
 use App\Models\Linmas;
@@ -160,6 +161,42 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function wargaSummary(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        $totalKamtibmas = LaporanKamtibmas::where('user_id', $userId)->count();
+        $totalRumahKosong = LaporanRumahKosong::where('user_id', $userId)->count();
+        $totalPanic = PanicButtonLog::where('user_id', $userId)->count();
+
+        $jadwalQuery = JadwalRondaPetugas::where('user_id', $userId);
+        $totalJadwalRonda = (clone $jadwalQuery)->count();
+        $totalHadir = (clone $jadwalQuery)->where('status_hadir', 'hadir')->count();
+        $persentaseKehadiran = $totalJadwalRonda > 0
+            ? round($totalHadir / $totalJadwalRonda * 100, 1)
+            : 0.0;
+
+        $trend12Bulan = $this->getTrend12BulanByUser($userId);
+        $kategoriBreakdown = $this->getKategoriBreakdownByUser($userId);
+
+        $riwayatKehadiran = $this->getRiwayatKehadiranByUser($userId);
+
+        return response()->json([
+            'data' => [
+                'stats' => [
+                    'total_laporan_kamtibmas' => $totalKamtibmas,
+                    'total_laporan_rumah_kosong' => $totalRumahKosong,
+                    'total_panic_button' => $totalPanic,
+                    'total_jadwal_ronda' => $totalJadwalRonda,
+                    'persentase_kehadiran_ronda' => $persentaseKehadiran,
+                ],
+                'kamtibmas_trend_12_bulan' => $trend12Bulan,
+                'kamtibmas_kategori' => $kategoriBreakdown,
+                'riwayat_kehadiran_ronda' => $riwayatKehadiran,
+            ],
+        ]);
+    }
+
     public function generateAiInsight(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -282,5 +319,73 @@ class DashboardController extends Controller
             'direspon' => $direspon,
             'rata_rata_response_menit' => $avgMinutes,
         ];
+    }
+
+    private function getTrend12BulanByUser(int $userId): array
+    {
+        $months = collect();
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months->push([
+                'bulan' => $date->format('Y-m'),
+                'label' => $date->translatedFormat('M Y'),
+                'total' => 0,
+            ]);
+        }
+
+        $records = LaporanKamtibmas::where('user_id', $userId)
+            ->where('created_at', '>=', Carbon::now()->subMonths(11)->startOfMonth())
+            ->select('created_at')
+            ->get()
+            ->groupBy(fn ($r) => $r->created_at->format('Y-m'));
+
+        return $months->map(function ($m) use ($records) {
+            $group = $records->get($m['bulan']);
+            $m['total'] = $group ? $group->count() : 0;
+
+            return $m;
+        })->toArray();
+    }
+
+    private function getKategoriBreakdownByUser(int $userId): array
+    {
+        return LaporanKamtibmas::where('user_id', $userId)
+            ->whereYear('created_at', now()->year)
+            ->selectRaw('kategori, count(*) as total')
+            ->groupBy('kategori')
+            ->get()
+            ->pluck('total', 'kategori')
+            ->toArray();
+    }
+
+    private function getRiwayatKehadiranByUser(int $userId): array
+    {
+        $months = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months->push([
+                'bulan' => $date->format('Y-m'),
+                'label' => $date->translatedFormat('M Y'),
+                'dijadwalkan' => 0,
+                'hadir' => 0,
+            ]);
+        }
+
+        $records = JadwalRondaPetugas::where('user_id', $userId)
+            ->whereHas('jadwalRonda', fn ($q) => $q->where('tanggal', '>=', Carbon::now()->subMonths(5)->startOfMonth()))
+            ->with('jadwalRonda')
+            ->get();
+
+        $grouped = $records->groupBy(fn ($r) => $r->jadwalRonda
+            ? $r->jadwalRonda->tanggal->format('Y-m')
+            : now()->format('Y-m'));
+
+        return $months->map(function ($m) use ($grouped) {
+            $group = $grouped->get($m['bulan'], collect());
+            $m['dijadwalkan'] = $group->count();
+            $m['hadir'] = $group->where('status_hadir', 'hadir')->count();
+
+            return $m;
+        })->toArray();
     }
 }

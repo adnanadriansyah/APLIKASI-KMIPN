@@ -52,7 +52,7 @@ class LinmasControllerTest extends TestCase
 
     // ─── INDEX ──────────────────────────────────────────────
 
-    public function test_polsek_sees_all_linmas(): void
+    public function test_polsek_sees_own_linmas_only(): void
     {
         $linmas1 = $this->createLinmas($this->polsek, 'Linmas A');
         $linmas2 = $this->createLinmas($this->otherPolsek, 'Linmas B');
@@ -62,7 +62,7 @@ class LinmasControllerTest extends TestCase
         $response->assertOk();
         $ids = collect($response->json('data'))->pluck('id')->toArray();
         $this->assertContains($linmas1->id, $ids);
-        $this->assertContains($linmas2->id, $ids);
+        $this->assertNotContains($linmas2->id, $ids);
     }
 
     // ─── STORE ──────────────────────────────────────────────
@@ -85,18 +85,18 @@ class LinmasControllerTest extends TestCase
 
     // ─── SHOW ───────────────────────────────────────────────
 
-    public function test_polsek_can_see_any_linmas(): void
+    public function test_polsek_cannot_see_other_polsek_linmas(): void
     {
         $other = $this->createLinmas($this->otherPolsek);
 
         $response = $this->actingAs($this->polsekUser)->getJson("/api/linmas/{$other->id}");
 
-        $response->assertOk();
+        $response->assertForbidden();
     }
 
     // ─── UPDATE ─────────────────────────────────────────────
 
-    public function test_polsek_can_update_any_linmas(): void
+    public function test_polsek_cannot_update_other_polsek_linmas(): void
     {
         $other = $this->createLinmas($this->otherPolsek);
 
@@ -107,20 +107,18 @@ class LinmasControllerTest extends TestCase
             'wilayah_tugas' => 'Dusun C',
         ]);
 
-        $response->assertOk();
-        $this->assertDatabaseHas('linmas', ['id' => $other->id, 'nama' => 'Updated']);
+        $response->assertForbidden();
     }
 
     // ─── DESTROY ────────────────────────────────────────────
 
-    public function test_polsek_can_delete_any_linmas(): void
+    public function test_polsek_cannot_delete_other_polsek_linmas(): void
     {
         $other = $this->createLinmas($this->otherPolsek);
 
         $response = $this->actingAs($this->polsekUser)->deleteJson("/api/linmas/{$other->id}");
 
-        $response->assertOk();
-        $this->assertDatabaseMissing('linmas', ['id' => $other->id]);
+        $response->assertForbidden();
     }
 
     // ─── PAGINATION ─────────────────────────────────────────

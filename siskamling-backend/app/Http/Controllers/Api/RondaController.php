@@ -11,6 +11,7 @@ use App\Http\Resources\QrcodeRondaResource;
 use App\Models\JadwalRonda;
 use App\Models\JadwalRondaPetugas;
 use App\Models\QrcodeRonda;
+use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -179,6 +180,9 @@ class RondaController extends Controller
                 'status_hadir' => 'hadir',
             ]);
         });
+
+        $qrcode->jadwalRondaPetugas->load('jadwalRonda.dusun', 'user');
+        app(FirebaseService::class)->pushRondaPresensi($qrcode->jadwalRondaPetugas);
 
         return response()->json([
             'message' => 'Absensi berhasil. Status kehadiran diperbarui.',

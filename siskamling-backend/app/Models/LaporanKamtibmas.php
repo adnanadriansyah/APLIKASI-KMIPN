@@ -12,7 +12,7 @@ class LaporanKamtibmas extends Model
 
     protected $table = 'laporan_kamtibmas';
 
-    protected $fillable = ['user_id', 'dusun_id', 'kategori', 'lokasi_text', 'latitude', 'longitude', 'kronologi', 'ai_summary', 'status'];
+    protected $fillable = ['user_id', 'dusun_id', 'kategori', 'lokasi_text', 'latitude', 'longitude', 'kronologi', 'ai_summary', 'ai_urgency_level', 'status'];
 
     protected function casts(): array
     {

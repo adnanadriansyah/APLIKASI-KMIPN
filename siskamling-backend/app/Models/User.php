@@ -62,7 +62,7 @@ class User extends Authenticatable
 
     /**
      * Resolve polsek_id untuk user ini berdasarkan hierarchy:
-     *   polsek          → null (global access, no filter)
+     *   polsek          → user.polsek_id (filtered to own polsek)
      *   aparatur_desa   → desa_id → desa.polsek_id
      *   warga           → dusun_id → dusun.desa.polsek_id
      */
@@ -71,7 +71,7 @@ class User extends Authenticatable
         $roleName = $this->role?->name;
 
         if ($roleName === 'polsek') {
-            return null;
+            return $this->polsek_id;
         }
 
         if ($this->desa_id && $this->desa) {
@@ -88,7 +88,7 @@ class User extends Authenticatable
     /**
      * Get array dusun_ids yang bisa diakses user ini berdasarkan hierarchy.
      *
-     * Polsek         → semua dusun (global access)
+     * Polsek         → semua dusun di polsek-nya (filtered by polsek_id)
      * Aparatur desa  → semua dusun di desanya
      * Warga          → dusun sendiri saja
      */
@@ -97,6 +97,11 @@ class User extends Authenticatable
         $roleName = $this->role?->name;
 
         if ($roleName === 'polsek') {
+            if ($this->polsek_id) {
+                return Dusun::whereHas('desa', fn ($q) => $q->where('polsek_id', $this->polsek_id))
+                    ->pluck('id')->toArray();
+            }
+
             return Dusun::pluck('id')->toArray();
         }
 

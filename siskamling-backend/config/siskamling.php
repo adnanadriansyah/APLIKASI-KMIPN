@@ -15,17 +15,23 @@ return [
 
     'kategori_kamtibmas' => [
         'pencurian' => 'Pencurian',
-        'mencurigakan' => 'Mencurigakan',
-        'vandalisme' => 'Vandalisme',
-        'kebakaran' => 'Kebakaran',
-        'keributan' => 'Keributan',
-        'lainnya' => 'Lainnya',
+        'kdrt' => 'KDRT',
+        'narkoba' => 'Narkoba',
+        'tawuran' => 'Tawuran',
+        'pembunuhan' => 'Pembunuhan',
+        'begal' => 'Begal',
     ],
 
     'status_kamtibmas' => [
         'baru' => 'Baru',
         'diproses' => 'Diproses',
         'selesai' => 'Selesai',
+    ],
+
+    'urgency_level_kamtibmas' => [
+        'rendah' => 'Rendah',
+        'sedang' => 'Sedang',
+        'tinggi' => 'Tinggi',
     ],
 
     'status_rumah_kosong' => [
