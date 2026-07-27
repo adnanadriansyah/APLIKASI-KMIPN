@@ -29,6 +29,10 @@ class RumahKosongController extends Controller
             $query->whereHas('user', fn ($q) => $q->whereIn('dusun_id', $dusunIds));
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         $perPage = min((int) $request->input('per_page', 15), 50);
         $laporan = $query->latest()->paginate($perPage);
 

@@ -14,6 +14,7 @@ class JadwalRondaPetugasResource extends JsonResource
             'user' => [
                 'id' => $this->user->id,
                 'nama' => $this->user->nama,
+                'jabatan' => $this->user->jabatan,
             ],
             'status_hadir' => $this->status_hadir,
         ];

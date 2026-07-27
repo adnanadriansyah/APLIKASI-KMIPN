@@ -14,6 +14,7 @@ class PanicResource extends JsonResource
             'user' => [
                 'id' => $this->user->id,
                 'nama' => $this->user->nama,
+                'jabatan' => $this->user->jabatan,
                 'phone' => $this->user->phone,
             ],
             'latitude' => $this->latitude,
@@ -22,6 +23,7 @@ class PanicResource extends JsonResource
             'responded_by' => $this->whenLoaded('respondedBy', fn () => [
                 'id' => $this->respondedBy->id,
                 'nama' => $this->respondedBy->nama,
+                'jabatan' => $this->respondedBy->jabatan,
             ]),
             'responded_at' => $this->responded_at,
             'created_at' => $this->created_at,

@@ -80,12 +80,30 @@ class DashboardController extends Controller
         $linmas = Linmas::where('polsek_id', $polsek->id)
             ->get(['id', 'nama', 'jabatan', 'no_hp', 'wilayah_tugas']);
 
+        $trend12Bulan = $this->getTrend12Bulan($dusunIds);
+        $kategoriBreakdown = $this->getKategoriBreakdown($dusunIds);
+        $statusBreakdown = $this->getStatusBreakdown($dusunIds);
+
         return response()->json([
             'data' => [
                 'polsek' => ['id' => $polsek->id, 'nama' => $polsek->nama],
+                'stats' => [
+                    'total_laporan_kamtibmas' => LaporanKamtibmas::whereIn('dusun_id', $dusunIds)->count(),
+                    'laporan_bulan_ini' => LaporanKamtibmas::whereIn('dusun_id', $dusunIds)
+                        ->whereYear('created_at', now()->year)
+                        ->whereMonth('created_at', now()->month)
+                        ->count(),
+                    'panic_aktif' => PanicButtonLog::whereIn('dusun_id', $dusunIds)
+                        ->where('status', 'terkirim')
+                        ->count(),
+                    'total_linmas' => $linmas->count(),
+                ],
                 'heatmap_kamtibmas' => $heatmap,
                 'ronda_bulan_ini' => $rondaPerDusun,
                 'anggota_linmas' => $linmas,
+                'kamtibmas_trend_12_bulan' => $trend12Bulan,
+                'kamtibmas_kategori' => $kategoriBreakdown,
+                'kamtibmas_status' => $statusBreakdown,
             ],
         ]);
     }

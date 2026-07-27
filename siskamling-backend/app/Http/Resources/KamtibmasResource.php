@@ -14,6 +14,7 @@ class KamtibmasResource extends JsonResource
             'user' => [
                 'id' => $this->user->id,
                 'nama' => $this->user->nama,
+                'jabatan' => $this->user->jabatan,
             ],
             'dusun' => [
                 'id' => $this->dusun->id,
@@ -26,6 +27,7 @@ class KamtibmasResource extends JsonResource
             'longitude' => $this->longitude,
             'kronologi' => $this->kronologi,
             'ai_summary' => $this->ai_summary,
+            'ai_urgency_level' => $this->ai_urgency_level,
             'status' => $this->status,
             'status_label' => config('siskamling.status_kamtibmas.'.$this->status, $this->status),
             'media' => KamtibmasMediaResource::collection($this->whenLoaded('media')),

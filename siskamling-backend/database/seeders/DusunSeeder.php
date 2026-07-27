@@ -9,7 +9,7 @@ class DusunSeeder extends Seeder
 {
     public function run(): void
     {
-        $dusunNames = ['Dusun A', 'Dusun B', 'Dusun C'];
+        $dusunNames = ['Lingkungan I', 'Lingkungan II', 'Lingkungan III'];
 
         foreach ($dusunNames as $nama) {
             Dusun::create([

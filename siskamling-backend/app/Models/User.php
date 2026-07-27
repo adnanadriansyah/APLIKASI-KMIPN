@@ -20,6 +20,7 @@ class User extends Authenticatable
         'desa_id',
         'polsek_id',
         'nama',
+        'jabatan',
         'email',
         'phone',
         'nik',

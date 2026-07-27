@@ -7,12 +7,15 @@ use App\Http\Controllers\Api\LinmasController;
 use App\Http\Controllers\Api\PanicController;
 use App\Http\Controllers\Api\RondaController;
 use App\Http\Controllers\Api\RumahKosongController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [AuthController::class, 'me']);
+
     Route::prefix('ronda')->group(function () {
         Route::get('/jadwal', [RondaController::class, 'index']);
         Route::post('/jadwal', [RondaController::class, 'store'])
@@ -56,8 +59,25 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [PanicController::class, 'store'])
             ->middleware('role:warga');
         Route::get('/active', [PanicController::class, 'active']);
+        Route::get('/history', [PanicController::class, 'history'])
+            ->middleware('role:polsek');
         Route::put('/{id}/respond', [PanicController::class, 'respond'])
             ->middleware('role:polsek');
+    });
+
+    Route::prefix('warga')->group(function () {
+        Route::get('/meta/dusuns', [UserController::class, 'dusuns'])
+            ->middleware('role:aparatur_desa');
+        Route::get('/', [UserController::class, 'index'])
+            ->middleware('role:aparatur_desa');
+        Route::post('/', [UserController::class, 'store'])
+            ->middleware('role:aparatur_desa');
+        Route::get('/{id}', [UserController::class, 'show'])
+            ->middleware('role:aparatur_desa');
+        Route::put('/{id}', [UserController::class, 'update'])
+            ->middleware('role:aparatur_desa');
+        Route::delete('/{id}', [UserController::class, 'destroy'])
+            ->middleware('role:aparatur_desa');
     });
 
     Route::prefix('dashboard')->group(function () {

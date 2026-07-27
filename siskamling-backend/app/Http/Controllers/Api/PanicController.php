@@ -110,4 +110,34 @@ class PanicController extends Controller
             ],
         ]);
     }
+
+    public function history(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $dusunIds = $user->getDusunIds();
+
+        if (empty($dusunIds)) {
+            return response()->json(['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0]]);
+        }
+
+        $query = PanicButtonLog::with(['user', 'respondedBy'])
+            ->whereHas('user', fn ($q) => $q->whereIn('dusun_id', $dusunIds));
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $perPage = min((int) $request->input('per_page', 15), 50);
+        $panic = $query->latest()->paginate($perPage);
+
+        return response()->json([
+            'data' => PanicResource::collection($panic),
+            'meta' => [
+                'current_page' => $panic->currentPage(),
+                'last_page' => $panic->lastPage(),
+                'per_page' => $panic->perPage(),
+                'total' => $panic->total(),
+            ],
+        ]);
+    }
 }

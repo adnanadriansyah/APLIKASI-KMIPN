@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             DesaSeeder::class,
             DusunSeeder::class,
             UserSeeder::class,
+            LinmasSeeder::class,
         ]);
     }
 }

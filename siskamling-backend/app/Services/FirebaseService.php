@@ -75,6 +75,7 @@ class FirebaseService
             $data = [
                 'user_id' => $petugas->user_id,
                 'nama' => $petugas->user->nama ?? null,
+                'jabatan' => $petugas->user->jabatan ?? null,
                 'status_hadir' => $petugas->status_hadir,
                 'scanned_at' => $petugas->updated_at?->toIso8601String(),
             ];

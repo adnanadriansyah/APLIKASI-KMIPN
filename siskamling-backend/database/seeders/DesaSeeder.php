@@ -11,7 +11,7 @@ class DesaSeeder extends Seeder
     {
         Desa::create([
             'polsek_id' => 1,
-            'nama' => 'Desa Contoh',
+            'nama' => 'Gampong Kandang',
         ]);
     }
 }

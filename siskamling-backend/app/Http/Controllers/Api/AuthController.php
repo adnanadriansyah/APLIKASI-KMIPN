@@ -27,9 +27,27 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'nama' => $user->nama,
+                'jabatan' => $user->jabatan,
                 'email' => $user->email,
                 'role' => $user->role?->name,
             ],
+        ]);
+    }
+
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user()->load('role');
+
+        return response()->json([
+            'id' => $user->id,
+            'nama' => $user->nama,
+            'email' => $user->email,
+            'jabatan' => $user->jabatan,
+            'phone' => $user->phone,
+            'dusun_id' => $user->dusun_id,
+            'desa_id' => $user->desa_id,
+            'polsek_id' => $user->polsek_id,
+            'role' => $user->role?->name,
         ]);
     }
 
