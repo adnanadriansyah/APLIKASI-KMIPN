@@ -42,7 +42,12 @@ export default function AppRoutes() {
 
   if (loading) return <PageLoader />
 
-  const dashboardPath = user ? `/${user.role}/dashboard` : '/login'
+  const DASHBOARD_MAP = {
+    warga: '/warga/dashboard',
+    aparatur_desa: '/desa/dashboard',
+    polsek: '/polsek/dashboard',
+  }
+  const dashboardPath = user ? (DASHBOARD_MAP[user.role] || '/login') : '/login'
 
   return (
     <Suspense fallback={<PageLoader />}>

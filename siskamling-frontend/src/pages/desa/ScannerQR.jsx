@@ -10,6 +10,7 @@ export default function ScannerQR() {
   const { user } = useAuth()
   const scannerRef = useRef(null)
   const containerRef = useRef(null)
+  const isScanningRef = useRef(false)
 
   const [scanning, setScanning] = useState(true)
   const [cameraError, setCameraError] = useState(null)
@@ -60,20 +61,27 @@ export default function ScannerQR() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          scanner.stop().catch(() => {})
+          try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+          isScanningRef.current = false
           setScanning(false)
           await processScan(decodedText)
         },
         () => {}
       )
+      .then(() => {
+        isScanningRef.current = true
+      })
       .catch(() => {
         setScanning(false)
         setCameraError('Tidak dapat mengakses kamera. Gunakan input manual di bawah.')
       })
 
     return () => {
-      scanner.stop().catch(() => {})
-      scanner.clear().catch(() => {})
+      if (isScanningRef.current) {
+        try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+        isScanningRef.current = false
+      }
+      try { scanner.clear() } catch { /* scanner.stop/clear may not return a promise */ }
     }
   }, [processScan])
 
@@ -82,17 +90,27 @@ export default function ScannerQR() {
     setScanError(null)
     setCameraError(null)
     setScanning(true)
-    scannerRef.current
-      ?.start(
+    const scanner = scannerRef.current
+    if (!scanner) {
+      setScanning(false)
+      setCameraError('Gagal memulai ulang kamera.')
+      return
+    }
+    scanner
+      .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          scannerRef.current?.stop().catch(() => {})
+          try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+          isScanningRef.current = false
           setScanning(false)
           await processScan(decodedText)
         },
         () => {}
       )
+      .then(() => {
+        isScanningRef.current = true
+      })
       .catch(() => {
         setScanning(false)
         setCameraError('Gagal memulai ulang kamera.')
@@ -111,6 +129,7 @@ export default function ScannerQR() {
 
   return (
     <div className="space-y-6">
+      <style>{`#qr-reader video { transform: scaleX(-1); }`}</style>
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Scanner Presensi Ronda</h1>
         <p className="text-sm text-gray-500 mt-1">Scan QR Code warga atau masukkan kode secara manual</p>
