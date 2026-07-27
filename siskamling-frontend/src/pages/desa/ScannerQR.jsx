@@ -1,14 +1,53 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { scanQrCode } from '../../api/ronda'
-import { Card, Badge } from '../../components'
+import { getDusuns } from '../../api/warga'
+import { useRondaPresensi } from '../../firebase/useRondaPresensi'
+import { Card, Badge, LoadingSpinner } from '../../components'
 import { Html5Qrcode } from 'html5-qrcode'
 
 export default function ScannerQR() {
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [scanning, setScanning] = useState(true)
+  const { user } = useAuth()
   const scannerRef = useRef(null)
   const containerRef = useRef(null)
+
+  const [scanning, setScanning] = useState(true)
+  const [cameraError, setCameraError] = useState(null)
+
+  const [scanResult, setScanResult] = useState(null)
+  const [scanError, setScanError] = useState(null)
+
+  const [manualCode, setManualCode] = useState('')
+  const [manualLoading, setManualLoading] = useState(false)
+
+  const [dusunId, setDusunId] = useState(user?.dusun_id || null)
+  const [dusuns, setDusuns] = useState([])
+  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0])
+
+  const { presensi, loading: presensiLoading } = useRondaPresensi(dusunId, tanggal)
+
+  useEffect(() => {
+    if (!user?.dusun_id) {
+      getDusuns()
+        .then((res) => {
+          const list = res.data || []
+          setDusuns(list)
+          if (list.length === 1) setDusunId(list[0].id)
+        })
+        .catch(console.error)
+    }
+  }, [user])
+
+  const processScan = useCallback(async (code) => {
+    setScanError(null)
+    setScanResult(null)
+    try {
+      const res = await scanQrCode(code)
+      setScanResult(res)
+    } catch (e) {
+      setScanError(e.response?.data?.message || 'Gagal memproses QR code')
+    }
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -23,85 +62,198 @@ export default function ScannerQR() {
         async (decodedText) => {
           scanner.stop().catch(() => {})
           setScanning(false)
-          try {
-            const res = await scanQrCode(decodedText)
-            setResult(res)
-            setError(null)
-          } catch (e) {
-            setError(e.response?.data?.message || 'Gagal memproses QR code')
-            setResult(null)
-          }
+          await processScan(decodedText)
         },
         () => {}
       )
       .catch(() => {
         setScanning(false)
-        setError('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.')
+        setCameraError('Tidak dapat mengakses kamera. Gunakan input manual di bawah.')
       })
 
     return () => {
       scanner.stop().catch(() => {})
       scanner.clear().catch(() => {})
     }
-  }, [])
+  }, [processScan])
 
-  const restart = () => {
-    setResult(null)
-    setError(null)
+  const restartCamera = () => {
+    setScanResult(null)
+    setScanError(null)
+    setCameraError(null)
     setScanning(true)
-    scannerRef.current?.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      async (decodedText) => {
-        scannerRef.current?.stop().catch(() => {})
+    scannerRef.current
+      ?.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (decodedText) => {
+          scannerRef.current?.stop().catch(() => {})
+          setScanning(false)
+          await processScan(decodedText)
+        },
+        () => {}
+      )
+      .catch(() => {
         setScanning(false)
-        try {
-          const res = await scanQrCode(decodedText)
-          setResult(res)
-          setError(null)
-        } catch (e) {
-          setError(e.response?.data?.message || 'Gagal memproses QR code')
-        }
-      },
-      () => {}
-    ).catch(() => setError('Gagal memulai ulang kamera'))
+        setCameraError('Gagal memulai ulang kamera.')
+      })
+  }
+
+  const handleManualSubmit = async (e) => {
+    e.preventDefault()
+    const code = manualCode.trim()
+    if (!code) return
+    setManualLoading(true)
+    await processScan(code)
+    setManualLoading(false)
+    setManualCode('')
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Scan QR Presensi</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Scanner Presensi Ronda</h1>
+        <p className="text-sm text-gray-500 mt-1">Scan QR Code warga atau masukkan kode secara manual</p>
+      </div>
 
-      <Card className="max-w-md mx-auto">
-        <div id="qr-reader" ref={containerRef} className="rounded-lg overflow-hidden" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Kiri: Scanner + Manual Input */}
+        <div className="space-y-6">
+          <Card title="Scan QR Code">
+            <div id="qr-reader" ref={containerRef} className="rounded-lg overflow-hidden" />
 
-        {scanning && (
-          <p className="text-sm text-gray-500 text-center mt-4">
-            Arahkan kamera ke QR Code petugas ronda
-          </p>
-        )}
+            {scanning && (
+              <p className="text-sm text-gray-500 text-center mt-4">
+                Arahkan kamera ke QR Code petugas ronda
+              </p>
+            )}
 
-        {result && (
-          <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-            <Badge color="success">Berhasil</Badge>
-            <p className="text-sm text-gray-700 mt-2">
-              Absensi tercatat untuk jadwal ronda.
-            </p>
-            <button onClick={restart} className="mt-3 text-sm text-blue-600 hover:underline">
-              Scan Lagi
-            </button>
+            {scanResult && (
+              <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+                <Badge color="success">Berhasil</Badge>
+                <p className="text-sm text-gray-700 mt-2">
+                  Absensi tercatat untuk jadwal ronda.
+                </p>
+                <button
+                  onClick={restartCamera}
+                  className="mt-3 text-sm text-blue-600 hover:underline"
+                >
+                  Scan Lagi
+                </button>
+              </div>
+            )}
+
+            {scanError && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+                <Badge color="danger">Gagal</Badge>
+                <p className="text-sm text-red-700 mt-2">{scanError}</p>
+                <button
+                  onClick={restartCamera}
+                  className="mt-3 text-sm text-blue-600 hover:underline"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            )}
+
+            {cameraError && (
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-700 text-center">{cameraError}</p>
+              </div>
+            )}
+          </Card>
+
+          <Card title="Input Manual">
+            <form onSubmit={handleManualSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="Masukkan kode QR..."
+                disabled={manualLoading}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={manualLoading || !manualCode.trim()}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {manualLoading ? 'Proses...' : 'Proses'}
+              </button>
+            </form>
+          </Card>
+        </div>
+
+        {/* Kanan: Scan Terakhir */}
+        <Card
+          title="Scan Terakhir"
+          subtitle={
+            <span className="text-xs text-gray-400">
+              Update real-time dari Firebase
+            </span>
+          }
+        >
+          <div className="space-y-3 mb-4">
+            {!user?.dusun_id && dusuns.length > 1 && (
+              <select
+                value={dusunId || ''}
+                onChange={(e) => setDusunId(Number(e.target.value))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Pilih Lingkungan</option>
+                {dusuns.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.nama}
+                  </option>
+                ))}
+              </select>
+            )}
+            <input
+              type="date"
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-        )}
 
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-            <Badge color="danger">Gagal</Badge>
-            <p className="text-sm text-red-700 mt-2">{error}</p>
-            <button onClick={restart} className="mt-3 text-sm text-blue-600 hover:underline">
-              Coba Lagi
-            </button>
-          </div>
-        )}
-      </Card>
+          {presensiLoading ? (
+            <LoadingSpinner className="py-12" />
+          ) : presensi.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-sm text-gray-400">Belum ada scan hari ini</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+              {presensi.map((item) => (
+                <div
+                  key={item.petugasId}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {item.nama}
+                    </div>
+                    <div className="text-xs text-gray-500">{item.jabatan || '-'}</div>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <Badge color={item.status_hadir === 'hadir' ? 'success' : 'warning'}>
+                      {item.status_hadir === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                    </Badge>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {item.scanned_at
+                        ? new Date(item.scanned_at).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }

@@ -2,12 +2,12 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
-  { to: '/desa/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/desa/penjadwalan-ronda', label: 'Penjadwalan Ronda', icon: '🌙' },
-  { to: '/desa/rekap-rumah-kosong', label: 'Rekap Rumah Kosong', icon: '🏡' },
-  { to: '/desa/kamtibmas', label: 'Kamtibmas', icon: '🚨' },
-  { to: '/desa/manajemen-warga', label: 'Manajemen Warga', icon: '👥' },
-  { to: '/desa/scan-qr', label: 'Scan QR Presensi', icon: '📷' },
+  { to: '/desa/dashboard', label: 'Dashboard' },
+  { to: '/desa/penjadwalan-ronda', label: 'Penjadwalan Ronda' },
+  { to: '/desa/scan-qr', label: 'Scanner Presensi' },
+  { to: '/desa/rekap-rumah-kosong', label: 'Rekap Rumah Kosong' },
+  { to: '/desa/kamtibmas', label: 'Kamtibmas' },
+  { to: '/desa/manajemen-warga', label: 'Manajemen Warga' },
 ]
 
 export default function DesaLayout() {
@@ -40,7 +40,6 @@ export default function DesaLayout() {
                 }`
               }
             >
-              <span>{item.icon}</span>
               <span>{item.label}</span>
             </NavLink>
           ))}
