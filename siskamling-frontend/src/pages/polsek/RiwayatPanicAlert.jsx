@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { getPanicHistory, respondPanic } from '../../api/panic'
+import { getPanicHistory, respondPanic, completePanic } from '../../api/panic'
 import { Card, Table, Badge, LoadingSpinner } from '../../components'
 
 export default function RiwayatPanicAlert() {
@@ -33,16 +33,27 @@ export default function RiwayatPanicAlert() {
     }
   }
 
+  const handleComplete = async (id) => {
+    try {
+      await completePanic(id)
+      fetchData(page, statusFilter)
+    } catch (e) {
+      alert('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
+    }
+  }
+
   const statusColor = (s) => {
     if (s === 'terkirim') return 'danger'
     if (s === 'direspon') return 'warning'
-    return 'success'
+    if (s === 'selesai') return 'success'
+    return 'neutral'
   }
 
   const statusLabel = (s) => {
     if (s === 'terkirim') return 'Terkirim'
     if (s === 'direspon') return 'Direspon'
-    return 'Selesai'
+    if (s === 'selesai') return 'Selesai'
+    return s
   }
 
   const columns = [
@@ -90,6 +101,15 @@ export default function RiwayatPanicAlert() {
       }) : '-',
     },
     {
+      key: 'completed_by', label: 'Diselesaikan Oleh',
+      render: (r) => r.completed_by ? (
+        <div>
+          <div className="text-sm text-gray-900">{r.completed_by.nama}</div>
+          {r.completed_by.jabatan && <div className="text-xs text-gray-500">{r.completed_by.jabatan}</div>}
+        </div>
+      ) : <span className="text-gray-400">-</span>,
+    },
+    {
       key: 'aksi', label: 'Aksi',
       render: (r) => (
         <div className="flex gap-1">
@@ -97,6 +117,12 @@ export default function RiwayatPanicAlert() {
             <button onClick={() => handleRespond(r.id)}
               className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded hover:bg-amber-200">
               Respon
+            </button>
+          )}
+          {r.status === 'direspon' && (
+            <button onClick={() => handleComplete(r.id)}
+              className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200">
+              Selesai
             </button>
           )}
         </div>
@@ -108,6 +134,7 @@ export default function RiwayatPanicAlert() {
     { value: '', label: 'Semua' },
     { value: 'terkirim', label: 'Terkirim' },
     { value: 'direspon', label: 'Direspon' },
+    { value: 'selesai', label: 'Selesai' },
   ]
 
   return (

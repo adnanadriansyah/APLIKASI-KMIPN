@@ -46,6 +46,7 @@ class FirebaseService
                 'status' => $panic->status,
                 'created_at' => $panic->created_at?->toIso8601String(),
                 'responded_at' => $panic->responded_at?->toIso8601String(),
+                'completed_at' => $panic->completed_at?->toIso8601String(),
             ];
 
             $this->getDatabase()->getReference($path)->set($data);

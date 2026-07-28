@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { motion } from 'framer-motion'
-import { Mail, Lock, ShieldCheck, Shield } from 'lucide-react'
+import { Mail, Lock, Shield } from 'lucide-react'
+import bgImage from '../assets/images/screen.png'
+import logoImage from '../assets/images/icon.png'
 
 const tabs = [
   {
@@ -65,16 +67,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* ── SISI KIRI: Foto + Overlay ── */}
       <div className="hidden md:flex relative w-[55%]">
-        {/* Background photo — ganti bg-[url('...')] dengan foto ronda asli */}
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1584438784894-089d6a62b8fa?w=1200&q=80')",
-          }}
+          style={{ backgroundImage: `url(${bgImage})` }}
         />
-        {/* Fallback kalau gambar belum ada */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a]" />
 
         {/* Gradient overlay dari bawah */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
@@ -105,9 +101,8 @@ export default function LoginPage() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <ShieldCheck className="w-6 h-6 text-gray-900" />
+            <img src={logoImage} alt="SiKamling Digital" className="w-8 h-8 object-contain" />
             <span className="text-xl font-extrabold text-gray-900 tracking-tight">
               SiKamling<span className="text-blue-600"> Digital</span>
             </span>

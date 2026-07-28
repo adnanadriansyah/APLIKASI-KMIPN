@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getPolsekSummary } from '../../api/dashboard'
-import { respondPanic } from '../../api/panic'
+import { respondPanic, completePanic, getActivePanics } from '../../api/panic'
 import { usePanicAlerts } from '../../firebase/usePanicAlerts'
 import { Card, ChartCard, StatCard, ProgressBar, Badge, Table, LoadingSpinner } from '../../components'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
@@ -24,8 +24,9 @@ export default function PolsekDashboard() {
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [restAlerts, setRestAlerts] = useState([])
 
-  const { alerts, error: panicError } = usePanicAlerts(user?.polsek_id)
+  const { alerts } = usePanicAlerts(user?.polsek_id)
 
   useEffect(() => {
     getPolsekSummary()
@@ -34,11 +35,27 @@ export default function PolsekDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    getActivePanics()
+      .then((res) => setRestAlerts(res.data || []))
+      .catch(() => {})
+  }, [])
+
   const handleRespondPanic = async (id) => {
     try {
       await respondPanic(id)
+      setRestAlerts((prev) => prev.map((a) => a.id === id ? { ...a, status: 'direspon' } : a))
     } catch (e) {
       alert('Gagal merespon: ' + (e.response?.data?.message || e.message))
+    }
+  }
+
+  const handleCompletePanic = async (id) => {
+    try {
+      await completePanic(id)
+      setRestAlerts((prev) => prev.filter((a) => a.id !== id))
+    } catch (e) {
+      alert('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
     }
   }
 
@@ -66,6 +83,8 @@ export default function PolsekDashboard() {
     ...l,
     id: l.id,
   }))
+
+  const panicAlerts = (alerts && alerts.length > 0) ? alerts : restAlerts
 
   const laporanColumns = [
     {
@@ -143,13 +162,13 @@ export default function PolsekDashboard() {
 
         <Card
           title="Live Panic Feed"
-          subtitle={panicError ? 'Firebase error' : 'Real-time dari Firebase'}
+          subtitle="Real-time panic alert"
         >
           <div className="max-h-[320px] overflow-y-auto space-y-2">
-            {!alerts || alerts.length === 0 ? (
+            {!panicAlerts || panicAlerts.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-8">Tidak ada panic alert aktif</p>
             ) : (
-              alerts.slice(0, 10).map((alert) => (
+              panicAlerts.slice(0, 10).map((alert) => (
                 <div key={alert.firebaseKey || alert.id} className="flex items-center justify-between py-2 px-3 bg-red-50 rounded-lg border border-red-100">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -169,6 +188,14 @@ export default function PolsekDashboard() {
                       className="ml-3 text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors font-medium shrink-0"
                     >
                       Respon
+                    </button>
+                  )}
+                  {alert.status === 'direspon' && (
+                    <button
+                      onClick={() => handleCompletePanic(alert.id)}
+                      className="ml-3 text-xs px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors font-medium shrink-0"
+                    >
+                      Selesai
                     </button>
                   )}
                 </div>

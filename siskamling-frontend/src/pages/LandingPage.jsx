@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import logoImage from '../assets/images/icon.png'
 import {
   Moon, ClipboardList, AlertTriangle, Home, MessageSquare, BarChart3,
-  Users, Shield, ShieldCheck, ChevronRight, MapPin,
+  Users, Shield, ChevronRight, MapPin,
 } from 'lucide-react'
 
 const features = [
@@ -118,7 +119,7 @@ export default function LandingPage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-gray-900" />
+            <img src={logoImage} alt="SiKamling Digital" className="w-8 h-8 object-contain" />
             <span className="text-xl font-extrabold text-gray-900 tracking-tight">
               SiKamling<span className="text-blue-600"> Digital</span>
             </span>
@@ -271,7 +272,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-center text-gray-600 mt-10 max-w-2xl mx-auto text-sm leading-relaxed">
-            Sistem ini hadir untuk menjawab kondisi tersebut secara digital dan real-time —
+            Sistem ini hadir untuk menjawab kondisi tersebut secara digital dan real-time
             mengubah ronda konvensional menjadi sistem terukur, verifiable, dan terhubung langsung
             dengan pihak keamanan.
           </p>
@@ -425,7 +426,7 @@ export default function LandingPage() {
                 </p>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Pemilihan lokasi ini berdasarkan kebutuhan nyata akan sistem keamanan lingkungan
-                  yang terintegrasi di gampong dengan struktur pemerintahan tradisional Aceh — mulai
+                  yang terintegrasi di gampong dengan struktur pemerintahan tradisional Aceh mulai
                   dari Keuchik, Tuha Peut, hingga jaringan ronda yang aktif di tiap lingkungan.
                 </p>
               </div>

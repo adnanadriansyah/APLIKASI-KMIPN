@@ -63,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:polsek');
         Route::put('/{id}/respond', [PanicController::class, 'respond'])
             ->middleware('role:polsek');
+        Route::put('/{id}/complete', [PanicController::class, 'complete'])
+            ->middleware('role:polsek');
     });
 
     Route::prefix('warga')->group(function () {

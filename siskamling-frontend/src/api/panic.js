@@ -19,3 +19,8 @@ export async function respondPanic(id) {
   const { data } = await api.put(`/api/panic/${id}/respond`)
   return data
 }
+
+export async function completePanic(id) {
+  const { data } = await api.put(`/api/panic/${id}/complete`)
+  return data
+}

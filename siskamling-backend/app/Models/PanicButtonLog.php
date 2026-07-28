@@ -12,7 +12,7 @@ class PanicButtonLog extends Model
 
     protected $table = 'panic_button_logs';
 
-    protected $fillable = ['user_id', 'dusun_id', 'latitude', 'longitude', 'status', 'responded_by', 'responded_at'];
+    protected $fillable = ['user_id', 'dusun_id', 'latitude', 'longitude', 'status', 'responded_by', 'responded_at', 'completed_by', 'completed_at'];
 
     protected function casts(): array
     {
@@ -20,6 +20,7 @@ class PanicButtonLog extends Model
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'responded_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -31,5 +32,10 @@ class PanicButtonLog extends Model
     public function respondedBy()
     {
         return $this->belongsTo(User::class, 'responded_by');
+    }
+
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 }
