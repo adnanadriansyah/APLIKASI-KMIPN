@@ -3,8 +3,9 @@ import { useAuth } from '../../context/AuthContext'
 import { getPolsekSummary } from '../../api/dashboard'
 import { respondPanic } from '../../api/panic'
 import { usePanicAlerts } from '../../firebase/usePanicAlerts'
-import { Card, ChartCard, Badge, LoadingSpinner } from '../../components'
+import { Card, ChartCard, StatCard, ProgressBar, Badge, Table, LoadingSpinner } from '../../components'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
+import { AlertTriangle, FileText, Shield, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import 'leaflet/dist/leaflet.css'
 
@@ -55,6 +56,42 @@ export default function PolsekDashboard() {
     value: val,
   }))
 
+  const laporanPerDusun = (data.laporan_per_dusun || []).map((d) => ({
+    key: d.nama,
+    label: d.nama,
+    value: d.total || d.count || 0,
+  }))
+
+  const laporanTerbaru = (data.laporan_terbaru || []).map((l) => ({
+    ...l,
+    id: l.id,
+  }))
+
+  const laporanColumns = [
+    {
+      key: 'created_at',
+      label: 'Tanggal',
+      render: (r) => (
+        <span className="text-sm">
+          {r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID') : '-'}
+        </span>
+      ),
+    },
+    { key: 'kategori', label: 'Kategori' },
+    { key: 'deskripsi', label: 'Deskripsi', render: (r) => (
+      <span className="truncate max-w-[200px] block">{r.deskripsi || '-'}</span>
+    )},
+    { key: 'dusun', label: 'Dusun', render: (r) => r.dusun?.nama || r.nama_dusun || '-' },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (r) => {
+        const map = { baru: 'danger', diproses: 'warning', selesai: 'success' }
+        return <Badge color={map[r.status] || 'neutral'}>{r.status || '-'}</Badge>
+      },
+    },
+  ]
+
   const heatmapPoints = (data.heatmap_kamtibmas || [])
     .filter((d) => d.laporan_kamtibmas_count > 0)
 
@@ -65,66 +102,15 @@ export default function PolsekDashboard() {
         <p className="text-gray-500">{user?.jabatan} &middot; Polsek</p>
       </div>
 
+      {/* StatCards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-blue-600">{s.total_laporan_kamtibmas || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Total Laporan</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-amber-500">{s.laporan_bulan_ini || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Laporan Bulan Ini</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-red-600">{s.panic_aktif || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Panic Aktif</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-emerald-600">{s.total_linmas || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Anggota Linmas</div>
-        </Card>
+        <StatCard icon={AlertTriangle} label="Alert Darurat Aktif" value={s.panic_aktif || 0} color="red" />
+        <StatCard icon={FileText} label="Laporan Bulan Ini" value={s.laporan_bulan_ini || 0} color="amber" />
+        <StatCard icon={Shield} label="Total Anggota Linmas" value={s.total_linmas || 0} color="emerald" />
+        <StatCard icon={TrendingUp} label="Skor Keamanan Gampong" value={s.skor_keamanan || '-'} color="blue" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {trend.length > 0 && (
-          <ChartCard title="Tren Kamtibmas 12 Bulan">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={trend}>
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        )}
-
-        {kategori.length > 0 && (
-          <ChartCard title="Kategori Kamtibmas">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={kategori}>
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        )}
-      </div>
-
-      {statusData.length > 0 && (
-        <ChartCard title="Status Laporan">
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={statusData} layout="vertical">
-              <XAxis type="number" allowDecimals={false} />
-              <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
-
+      {/* Heatmap + Live Panic Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Heatmap Kriminalitas per Lingkungan">
           <div className="h-[320px] rounded-lg overflow-hidden">
@@ -189,6 +175,61 @@ export default function PolsekDashboard() {
               ))
             )}
           </div>
+        </Card>
+      </div>
+
+      {/* Laporan per Dusun + Trend + Kategori */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {laporanPerDusun.length > 0 && (
+          <Card title="Laporan per Dusun">
+            <ProgressBar items={laporanPerDusun} />
+          </Card>
+        )}
+
+        {trend.length > 0 && (
+          <ChartCard title="Tren Kamtibmas 12 Bulan">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={trend}>
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+
+        {kategori.length > 0 && (
+          <ChartCard title="Kategori Kamtibmas">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={kategori}>
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+      </div>
+
+      {/* Status + Tabel Terbaru */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {statusData.length > 0 && (
+          <ChartCard title="Status Laporan">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={statusData} layout="vertical">
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+
+        <Card title="Laporan Kamtibmas Terbaru" className="lg:col-span-2">
+          <Table columns={laporanColumns} data={laporanTerbaru} emptyText="Belum ada laporan terbaru" />
         </Card>
       </div>
 

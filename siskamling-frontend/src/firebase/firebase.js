@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database'
+import { getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,9 +13,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const db = getDatabase(app)
-
-if (import.meta.env.DEV) {
-  connectDatabaseEmulator(db, 'localhost', 9000)
-}
 
 export default app

@@ -1,11 +1,23 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import TopBar from '../components/TopBar'
+import { LayoutDashboard, FileText, Shield, AlertTriangle } from 'lucide-react'
 
-const navItems = [
-  { to: '/polsek/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/polsek/manajemen-laporan', label: 'Manajemen Laporan', icon: '📋' },
-  { to: '/polsek/manajemen-linmas', label: 'Manajemen Linmas', icon: '🛡️' },
-  { to: '/polsek/riwayat-panic', label: 'Riwayat Panic Alert', icon: '🆘' },
+const navGroups = [
+  {
+    label: 'Menu Utama',
+    items: [
+      { to: '/polsek/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { to: '/polsek/manajemen-laporan', label: 'Manajemen Laporan', icon: FileText },
+    ],
+  },
+  {
+    label: 'Lainnya',
+    items: [
+      { to: '/polsek/manajemen-linmas', label: 'Manajemen Linmas', icon: Shield },
+      { to: '/polsek/riwayat-panic', label: 'Riwayat Panic Alert', icon: AlertTriangle },
+    ],
+  },
 ]
 
 export default function PolsekLayout() {
@@ -19,45 +31,54 @@ export default function PolsekLayout() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
         <div className="p-6 border-b border-gray-100">
           <h1 className="text-xl font-bold text-blue-600">Siskamling</h1>
           <p className="text-xs text-gray-400 mt-1">Portal Polsek</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`
-              }
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
+        <nav className="flex-1 p-4 space-y-5 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              <div className="text-xs font-medium text-gray-400 uppercase tracking-wider px-3 mb-2">
+                {group.label}
+              </div>
+              <div className="space-y-1">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`
+                    }
+                  >
+                    <item.icon size={18} strokeWidth={2} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
         <div className="p-4 border-t border-gray-100">
           <div className="text-sm font-medium text-gray-900">{user?.nama}</div>
           <div className="text-xs text-gray-400">{user?.jabatan || 'Polsek'}</div>
-          <button onClick={handleLogout} className="mt-3 w-full text-sm text-red-600 hover:text-red-700 py-2">
-            Keluar
-          </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopBar user={user} onLogout={handleLogout} />
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

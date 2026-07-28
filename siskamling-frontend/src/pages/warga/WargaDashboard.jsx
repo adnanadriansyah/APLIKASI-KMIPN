@@ -4,13 +4,14 @@ import { useAuth } from '../../context/AuthContext'
 import { getWargaSummary } from '../../api/dashboard'
 import { getJadwalRonda } from '../../api/ronda'
 import { triggerPanic } from '../../api/panic'
-import { Card, ChartCard, LoadingSpinner, Badge } from '../../components'
+import { Card, ChartCard, StatCard, LoadingSpinner, Badge } from '../../components'
+import { FileText, CalendarCheck, Home } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  AreaChart, Area, Cell,
 } from 'recharts'
 
-const PIE_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899']
+const KATEGORI_COLORS = ['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899']
 
 export default function WargaDashboard() {
   const { user } = useAuth()
@@ -39,9 +40,7 @@ export default function WargaDashboard() {
       (pos) => {
         const { latitude, longitude } = pos.coords
         triggerPanic({ latitude, longitude })
-          .then(() => {
-            alert('Panic button berhasil dikirim! Bantuan segera datang.')
-          })
+          .then(() => alert('Panic button berhasil dikirim! Bantuan segera datang.'))
           .catch((e) => alert('Gagal: ' + (e.response?.data?.message || e.message)))
           .finally(() => setPanicLoading(false))
       },
@@ -57,11 +56,10 @@ export default function WargaDashboard() {
 
   const s = stats.stats || {}
   const trend = stats.kamtibmas_trend_12_bulan || []
-  const kategori = (stats.kamtibmas_kategori || []).map((k) => ({
-    name: k.kategori,
-    value: k.total,
+  const kategori = Object.entries(stats.kamtibmas_kategori || {}).map(([key, val]) => ({
+    name: key.charAt(0).toUpperCase() + key.slice(1),
+    value: val,
   }))
-  const riwayatKehadiran = stats.riwayat_kehadiran_ronda || []
 
   const shiftLabel = (shift) => {
     if (shift === 'malam') return 'Malam (20:00 - 02:00)'
@@ -69,14 +67,15 @@ export default function WargaDashboard() {
     return shift
   }
 
-  const statusColor = (s) => {
-    if (s === 'berlangsung') return 'warning'
-    if (s === 'selesai') return 'success'
+  const statusColor = (st) => {
+    if (st === 'berlangsung') return 'warning'
+    if (st === 'selesai') return 'success'
     return 'info'
   }
 
   return (
     <div className="space-y-6">
+      {/* Baris 1: Panic Button */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Halo, {user?.nama}</h1>
@@ -91,34 +90,76 @@ export default function WargaDashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-blue-600">{s.total_laporan_kamtibmas || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Laporan Kamtibmas</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-amber-500">{s.total_laporan_rumah_kosong || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Rumah Kosong</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-red-600">{s.total_panic_button || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Panic Button</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-emerald-600">{s.total_jadwal_ronda || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Jadwal Ronda</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-purple-600">{s.persentase_kehadiran_ronda || 0}%</div>
-          <div className="text-sm text-gray-500 mt-1">Kehadiran Ronda</div>
-        </Card>
+      {/* Baris 2: StatCards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard
+          icon={FileText}
+          label="Laporan Kamtibmas"
+          value={s.total_laporan_kamtibmas || 0}
+          color="blue"
+        />
+        <StatCard
+          icon={CalendarCheck}
+          label="Kehadiran Ronda"
+          value={`${s.persentase_kehadiran_ronda || 0}%`}
+          color="emerald"
+        />
+        <StatCard
+          icon={Home}
+          label="Rumah Kosong Dilaporkan"
+          value={s.total_laporan_rumah_kosong || 0}
+          color="amber"
+        />
       </div>
 
-      <Card title="Jadwal Ronda Terdekat" actions={
-        <button onClick={() => navigate('/warga/ronda')} className="text-sm text-blue-600 hover:underline">
-          Lihat Semua
-        </button>
-      }>
+      {/* Baris 3: Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {trend.length > 0 && (
+          <ChartCard title="Tren Laporan Saya 12 Bulan">
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={trend}>
+                <defs>
+                  <linearGradient id="gradTrend" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} fill="url(#gradTrend)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+
+        {kategori.length > 0 && (
+          <ChartCard title="Kategori Laporan">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={kategori} layout="vertical">
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {kategori.map((_, i) => (
+                    <Cell key={i} fill={KATEGORI_COLORS[i % KATEGORI_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+      </div>
+
+      {/* Baris 4: Jadwal Ronda Terdekat */}
+      <Card
+        title="Jadwal Ronda Terdekat"
+        actions={
+          <button onClick={() => navigate('/warga/ronda')} className="text-sm text-blue-600 hover:underline">
+            Lihat Semua
+          </button>
+        }
+      >
         {jadwal.length === 0 ? (
           <p className="text-sm text-gray-400 py-4 text-center">Belum ada jadwal ronda</p>
         ) : (
@@ -137,58 +178,6 @@ export default function WargaDashboard() {
           </div>
         )}
       </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {riwayatKehadiran.length > 0 && (
-          <ChartCard title="Kehadiran Ronda">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={riwayatKehadiran}>
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="total" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        )}
-
-        {kategori.length > 0 && (
-          <ChartCard title="Kategori Kamtibmas">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={kategori}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {kategori.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend />
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        )}
-      </div>
-
-      {trend.length > 0 && (
-        <ChartCard title="Trend Kamtibmas 12 Bulan">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={trend}>
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
     </div>
   )
 }

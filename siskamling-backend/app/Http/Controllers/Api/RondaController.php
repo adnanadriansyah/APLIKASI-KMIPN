@@ -130,7 +130,12 @@ class RondaController extends Controller
                 return response()->json(['message' => 'QR code sudah digunakan.'], 409);
             }
             if (! $existingQr->expired_at || Carbon::now()->lessThan($existingQr->expired_at)) {
-                return response()->json(['message' => 'QR code masih aktif.'], 409);
+                $existingQr->qrcode_svg = self::cleanSvg(QrCode::format('svg')->size(200)->generate($existingQr->code));
+
+                return response()->json([
+                    'message' => 'QR code masih aktif.',
+                    'data' => new QrcodeRondaResource($existingQr),
+                ], 409);
             }
             $existingQr->delete();
         }
@@ -147,7 +152,7 @@ class RondaController extends Controller
             ]);
         });
 
-        $qrcodeSvg = QrCode::format('svg')->size(200)->generate($code);
+        $qrcodeSvg = self::cleanSvg(QrCode::format('svg')->size(200)->generate($code));
 
         $qrcode->qrcode_svg = $qrcodeSvg;
 
@@ -187,5 +192,15 @@ class RondaController extends Controller
         return response()->json([
             'message' => 'Absensi berhasil. Status kehadiran diperbarui.',
         ]);
+    }
+
+    private static function cleanSvg(string $svg): string
+    {
+        $svg = (string) $svg;
+
+        $svg = preg_replace('/<svg([^>]*?)\s+width="[^"]*"/', '<svg$1', $svg);
+        $svg = preg_replace('/<svg([^>]*?)\s+height="[^"]*"/', '<svg$1', $svg);
+
+        return $svg;
     }
 }

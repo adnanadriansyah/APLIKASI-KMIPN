@@ -11,6 +11,7 @@ export default function ScannerQR() {
   const scannerRef = useRef(null)
   const containerRef = useRef(null)
   const isScanningRef = useRef(false)
+  const unmountedRef = useRef(false)
 
   const [scanning, setScanning] = useState(true)
   const [cameraError, setCameraError] = useState(null)
@@ -52,6 +53,7 @@ export default function ScannerQR() {
 
   useEffect(() => {
     if (!containerRef.current) return
+    unmountedRef.current = false
 
     const scanner = new Html5Qrcode('qr-reader')
     scannerRef.current = scanner
@@ -61,27 +63,30 @@ export default function ScannerQR() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+          if (unmountedRef.current || !isScanningRef.current) return
           isScanningRef.current = false
+          try { scanner.stop() } catch {}
           setScanning(false)
           await processScan(decodedText)
         },
         () => {}
       )
       .then(() => {
-        isScanningRef.current = true
+        if (!unmountedRef.current) isScanningRef.current = true
       })
       .catch(() => {
+        if (unmountedRef.current) return
         setScanning(false)
         setCameraError('Tidak dapat mengakses kamera. Gunakan input manual di bawah.')
       })
 
     return () => {
+      unmountedRef.current = true
       if (isScanningRef.current) {
-        try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+        try { scanner.stop() } catch {}
         isScanningRef.current = false
       }
-      try { scanner.clear() } catch { /* scanner.stop/clear may not return a promise */ }
+      try { scanner.clear() } catch {}
     }
   }, [processScan])
 
@@ -101,8 +106,9 @@ export default function ScannerQR() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          try { scanner.stop() } catch { /* scanner.stop/clear may not return a promise */ }
+          if (!isScanningRef.current) return
           isScanningRef.current = false
+          try { scanner.stop() } catch {}
           setScanning(false)
           await processScan(decodedText)
         },
@@ -129,7 +135,9 @@ export default function ScannerQR() {
 
   return (
     <div className="space-y-6">
-      <style>{`#qr-reader video { transform: scaleX(-1); }`}</style>
+      <style>{`
+        #qr-reader video { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
+      `}</style>
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Scanner Presensi Ronda</h1>
         <p className="text-sm text-gray-500 mt-1">Scan QR Code warga atau masukkan kode secara manual</p>
@@ -137,9 +145,11 @@ export default function ScannerQR() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Kiri: Scanner + Manual Input */}
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-hidden">
           <Card title="Scan QR Code">
-            <div id="qr-reader" ref={containerRef} className="rounded-lg overflow-hidden" />
+            <div className="max-w-md mx-auto aspect-[4/3] rounded-lg overflow-hidden">
+              <div id="qr-reader" ref={containerRef} />
+            </div>
 
             {scanning && (
               <p className="text-sm text-gray-500 text-center mt-4">

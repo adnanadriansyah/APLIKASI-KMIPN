@@ -11,6 +11,7 @@ export default function WargaRonda() {
   const [qrOpen, setQrOpen] = useState(false)
   const [qrData, setQrData] = useState(null)
   const [qrLoading, setQrLoading] = useState(false)
+  const [qrError, setQrError] = useState(null)
   const [countdown, setCountdown] = useState(0)
   const timerRef = useRef(null)
 
@@ -41,13 +42,23 @@ export default function WargaRonda() {
 
   const handleGenerateQR = async (jadwalRondaPetugasId) => {
     setQrLoading(true)
+    setQrError(null)
+    setQrData(null)
     setQrOpen(true)
     try {
       const res = await generateQrCode(jadwalRondaPetugasId)
       setQrData(res.data)
     } catch (e) {
-      alert('Gagal generate QR: ' + (e.response?.data?.message || e.message))
-      setQrOpen(false)
+      const status = e.response?.status
+      const responseData = e.response?.data
+
+      if (status === 409 && responseData?.data?.code) {
+        setQrData(responseData.data)
+      } else if (status === 409) {
+        setQrError(responseData?.message || 'QR code sudah digunakan atau kedaluwarsa.')
+      } else {
+        setQrError(responseData?.message || 'Gagal generate QR Code. Silakan coba lagi.')
+      }
     } finally {
       setQrLoading(false)
     }
@@ -130,18 +141,19 @@ export default function WargaRonda() {
         </div>
       )}
 
-      <Modal isOpen={qrOpen} onClose={() => { setQrOpen(false); setQrData(null); }} title="QR Code Presensi Ronda" size="sm">
+      <Modal isOpen={qrOpen} onClose={() => { setQrOpen(false); setQrData(null); setQrError(null); }} title="QR Code Presensi Ronda" size="sm">
         {qrLoading ? (
           <LoadingSpinner className="py-8" />
-        ) : qrData ? (
+        ) : qrError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 text-center">
+            {qrError}
+          </div>
+        ) : qrData?.qrcode_svg ? (
           <div className="flex flex-col items-center gap-4">
-            {qrData.qrcode_svg ? (
-              <div dangerouslySetInnerHTML={{ __html: qrData.qrcode_svg }} className="w-48 h-48" />
-            ) : (
-              <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-xl text-gray-400 text-sm">
-                QR tidak tersedia
-              </div>
-            )}
+            <div
+              dangerouslySetInnerHTML={{ __html: qrData.qrcode_svg }}
+              className="w-48 h-48 bg-white rounded-xl p-2 border border-gray-200 [&_svg]:w-full [&_svg]:h-full"
+            />
 
             {countdown > 0 ? (
               <div className="text-center">
@@ -155,6 +167,11 @@ export default function WargaRonda() {
             <div className="text-xs text-gray-400 text-center">
               Tunjukkan QR ini kepada petugas ronda untuk presensi kehadiran.
             </div>
+          </div>
+        ) : qrData ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-red-500">Gagal memuat QR Code</p>
+            <p className="text-xs text-gray-400 mt-1">Data QR tidak ditemukan dalam response</p>
           </div>
         ) : null}
       </Modal>

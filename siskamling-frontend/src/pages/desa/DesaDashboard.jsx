@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDesaSummary, getAiInsight, generateAiInsight } from '../../api/dashboard'
-import { Card, ChartCard, LoadingSpinner } from '../../components'
+import { Card, ChartCard, StatCard, ProgressBar, LoadingSpinner } from '../../components'
+import { Users, Home, ShieldCheck, AlertTriangle } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -56,6 +57,12 @@ export default function DesaDashboard() {
     value: val,
   }))
 
+  const laporanPerDusun = (data.laporan_per_dusun || []).map((d) => ({
+    key: d.nama,
+    label: d.nama,
+    value: d.total || d.count || 0,
+  }))
+
   return (
     <div className="space-y-6">
       <div>
@@ -63,25 +70,15 @@ export default function DesaDashboard() {
         <p className="text-gray-500">{user?.jabatan} &middot; Aparatur Gampong</p>
       </div>
 
+      {/* StatCards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-blue-600">{s.total_warga || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Jumlah Warga</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-amber-500">{s.rumah_kosong_aktif || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Rumah Kosong Aktif</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-emerald-600">{s.ronda_bulan_ini || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Patroli Bulan Ini</div>
-        </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-red-600">{s.panic_aktif || 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Panic Aktif</div>
-        </Card>
+        <StatCard icon={Users} label="Jumlah Warga" value={s.total_warga || 0} color="blue" />
+        <StatCard icon={Home} label="Rumah Kosong Aktif" value={s.rumah_kosong_aktif || 0} color="amber" />
+        <StatCard icon={ShieldCheck} label="Patroli Bulan Ini" value={s.ronda_bulan_ini || 0} color="emerald" />
+        <StatCard icon={AlertTriangle} label="Panic Aktif" value={s.panic_aktif || 0} color="red" />
       </div>
 
+      {/* Trend + Kategori */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {trend.length > 0 && (
           <ChartCard title="Tren Kamtibmas 12 Bulan">
@@ -115,7 +112,8 @@ export default function DesaDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Status + AI Insight + Laporan per Dusun */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {status.length > 0 && (
           <ChartCard title="Status Laporan">
             <ResponsiveContainer width="100%" height={280}>
@@ -159,6 +157,12 @@ export default function DesaDashboard() {
             </div>
           )}
         </Card>
+
+        {laporanPerDusun.length > 0 && (
+          <Card title="Laporan per Dusun">
+            <ProgressBar items={laporanPerDusun} />
+          </Card>
+        )}
       </div>
     </div>
   )
