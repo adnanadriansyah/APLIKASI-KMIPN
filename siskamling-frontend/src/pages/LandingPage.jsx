@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import logoImage from '../assets/images/icon.png'
 import {
   Moon, ClipboardList, AlertTriangle, Home, MessageSquare, BarChart3,
@@ -124,12 +124,20 @@ const fadeScale = {
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const navLinks = [
+    { label: 'Fitur', href: '#fitur' },
+    { label: 'Cara Kerja', href: '#cara-kerja' },
+    { label: 'Untuk Siapa', href: '#untuk-siapa' },
+    { label: 'Studi Kasus', href: '#studi-kasus' },
+  ]
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
@@ -143,7 +151,7 @@ export default function LandingPage() {
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group" onClick={() => setMobileOpen(false)}>
             <motion.img
               src={logoImage}
               alt="SiKamling Digital"
@@ -156,34 +164,96 @@ export default function LandingPage() {
             </span>
           </Link>
 
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            {['Fitur', 'Cara Kerja', 'Untuk Siapa'].map((item, i) => (
+            {navLinks.map((link, i) => (
               <motion.a
-                key={item}
-                href={`#${item.toLowerCase().replace(' ', '-')}`}
+                key={link.label}
+                href={link.href}
                 className="relative hover:text-blue-600 transition-colors"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.05, duration: 0.4 }}
               >
-                {item}
+                {link.label}
               </motion.a>
             ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-          >
-            <Link
-              to="/login"
-              className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 inline-block"
+          {/* Desktop CTA */}
+          <div className="hidden md:block">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              Masuk
-            </Link>
-          </motion.div>
+              <Link
+                to="/login"
+                className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 inline-block"
+              >
+                Masuk
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle menu"
+          >
+            <div className="w-5 h-4 relative flex flex-col justify-between">
+              <motion.span
+                className="block h-0.5 bg-gray-700 rounded-full origin-center"
+                animate={mobileOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.span
+                className="block h-0.5 bg-gray-700 rounded-full"
+                animate={mobileOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+              <motion.span
+                className="block h-0.5 bg-gray-700 rounded-full origin-center"
+                animate={mobileOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
+            >
+              <div className="px-4 py-4 space-y-2">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block mt-3 px-3 py-2.5 text-sm font-medium text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Masuk
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* ── HERO ── */}
@@ -477,45 +547,83 @@ export default function LandingPage() {
       </section>
 
       {/* ── SECTION STUDI KASUS ── */}
-      <section className="py-20">
+      <section id="studi-kasus" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-80px' }}
-            variants={fadeUp}
-            className="max-w-4xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-10 sm:p-14"
+            variants={fadeScale}
+            className="text-center max-w-2xl mx-auto mb-14"
           >
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0f172a]">Lokasi Pilot Project</h2>
+            <p className="mt-3 text-gray-500">Gampong Kandang, Kecamatan Muara Dua, Kota Lhokseumawe, Aceh</p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
             <motion.div
-              className="flex flex-col sm:flex-row items-start gap-8"
-              variants={container}
+              variants={fadeUp}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 sm:p-10 flex flex-col"
             >
               <motion.div
-                variants={fadeUp}
-                className="shrink-0 w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center"
+                className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-5"
+                whileHover={{ rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 0.3 }}
               >
                 <MapPin className="w-6 h-6" />
               </motion.div>
-              <div>
-                <motion.h2 variants={fadeUp} className="text-2xl sm:text-3xl font-bold text-[#0f172a] mb-4">Lokasi Pilot Project</motion.h2>
-                <motion.p variants={fadeUp} className="text-gray-600 leading-relaxed mb-4">
-                  Sistem Siskamling Digital ini dirancang untuk diterapkan secara langsung di{' '}
-                  <strong className="text-[#0f172a]">Gampong Kandang, Kecamatan Muara Dua</strong>,
-                  di bawah wilayah hukum{' '}
-                  <strong className="text-[#0f172a]">Polsek Muara Dua, Kota Lhokseumawe, Aceh</strong>,
-                  sebagai lokasi uji coba awal (pilot project).
-                </motion.p>
-                <motion.p variants={fadeUp} className="text-sm text-gray-500 leading-relaxed">
-                  Pemilihan lokasi ini berdasarkan kebutuhan nyata akan sistem keamanan lingkungan
-                  yang terintegrasi di gampong dengan struktur pemerintahan tradisional Aceh mulai
-                  dari Keuchik, Tuha Peut, hingga jaringan ronda yang aktif di tiap lingkungan.
-                </motion.p>
+              <h3 className="text-xl font-bold text-[#0f172a] mb-3">Kenapa Gampong Kandang?</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                Sistem Siskamling Digital ini dirancang untuk diterapkan secara langsung di{' '}
+                <strong className="text-[#0f172a]">Gampong Kandang, Kecamatan Muara Dua</strong>,
+                di bawah wilayah hukum{' '}
+                <strong className="text-[#0f172a]">Polsek Muara Dua, Kota Lhokseumawe, Aceh</strong>,
+                sebagai lokasi uji coba awal (pilot project).
+              </p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                Pemilihan lokasi ini berdasarkan kebutuhan nyata akan sistem keamanan lingkungan
+                yang terintegrasi di gampong dengan struktur pemerintahan tradisional Aceh mulai
+                dari Keuchik, Tuha Peut, hingga jaringan ronda yang aktif di tiap lingkungan.
+              </p>
+              <div className="mt-auto grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">3</div>
+                  <div className="text-xs text-gray-500">Lingkungan</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">1</div>
+                  <div className="text-xs text-gray-500">Polsek Wilayah</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">4</div>
+                  <div className="text-xs text-gray-500">Aparatur Gampong</div>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden h-full"
+            >
+              <div className="w-full h-80 sm:h-full min-h-[300px]">
+                <iframe
+                  title="Lokasi Gampong Kandang"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31849.82658951884!2d96.66066231767595!3d5.185451441813887!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30477b6d0e6d9d0d%3A0x3039d80b220d7c0!2sMuara%20Dua%2C%20Lhokseumawe%20City%2C%20Aceh!5e1!3m2!1sen!2sid!4v1"
+                  className="w-full h-full"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 

@@ -5,27 +5,25 @@ import { respondPanic, completePanic, getActivePanics } from '../../api/panic'
 import { usePanicAlerts } from '../../firebase/usePanicAlerts'
 import { Card, ChartCard, StatCard, ProgressBar, Badge, Table, LoadingSpinner } from '../../components'
 import { useToast } from '../../components/Toast'
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader, Circle } from '@react-google-maps/api'
 import { AlertTriangle, FileText, Shield, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import 'leaflet/dist/leaflet.css'
 
-function FitBounds({ points }) {
-  const map = useMap()
-  useEffect(() => {
-    if (points.length > 0 && points[0].latitude && points[0].longitude) {
-      const bounds = points.map((p) => [p.latitude, p.longitude])
-      map.fitBounds(bounds, { padding: [40, 40] })
-    }
-  }, [map, points])
-  return null
-}
+const GMAPS_LIBRARIES = ['places']
+const GMAP_CONTAINER_STYLE = { height: '100%', width: '100%' }
+const GMAP_OPTIONS = { disableDefaultUI: true, zoomControl: true, scrollwheel: false }
 
 export default function PolsekDashboard() {
   const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [restAlerts, setRestAlerts] = useState([])
+  const [selectedHeatmap, setSelectedHeatmap] = useState(null)
+
+  const { isLoaded: gmapsLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  })
 
   const { alerts } = usePanicAlerts(user?.polsek_id)
 
@@ -137,33 +135,54 @@ export default function PolsekDashboard() {
       {/* Heatmap + Live Panic Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Heatmap Kriminalitas per Lingkungan">
-          <div className="h-[320px] rounded-lg overflow-hidden">
-            <MapContainer center={[5.1850, 96.6900]} zoom={13} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
-              <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              {heatmapPoints.length > 0 && <FitBounds points={heatmapPoints} />}
+          <div className="h-[320px] rounded-lg overflow-hidden relative">
+            <GoogleMap
+              mapContainerStyle={GMAP_CONTAINER_STYLE}
+              center={{ lat: 5.185, lng: 96.69 }}
+              zoom={13}
+              options={GMAP_OPTIONS}
+            >
               {heatmapPoints.map((d) => {
                 const count = d.laporan_kamtibmas_count || 0
-                const radius = Math.min(8 + count * 3, 30)
-                const color = count >= 5 ? '#ef4444' : count >= 2 ? '#f59e0b' : '#3b82f6'
-                const lat = d.latitude || d.lat || 5.185
-                const lng = d.longitude || d.lng || 96.69
+                const radius = Math.min(8000 + count * 3000, 30000)
+                const fillColor = count >= 5 ? '#ef4444' : count >= 2 ? '#f59e0b' : '#3b82f6'
+                const lat = parseFloat(d.latitude || d.lat || 5.185)
+                const lng = parseFloat(d.longitude || d.lng || 96.69)
                 return (
-                  <CircleMarker
+                  <Circle
                     key={d.id}
-                    center={[lat, lng]}
+                    center={{ lat, lng }}
                     radius={radius}
-                    fillColor={color}
-                    color={color}
-                    fillOpacity={0.5}
-                  >
-                    <Popup>
-                      <strong>{d.nama}</strong><br />
-                      {count} laporan kamtibmas
-                    </Popup>
-                  </CircleMarker>
+                    options={{
+                      fillColor,
+                      fillOpacity: 0.35,
+                      strokeColor: fillColor,
+                      strokeOpacity: 0.8,
+                      strokeWeight: 2,
+                      clickable: true,
+                    }}
+                    onClick={() => setSelectedHeatmap(d.id === selectedHeatmap ? null : d.id)}
+                  />
                 )
               })}
-            </MapContainer>
+              {heatmapPoints.filter((d) => d.id === selectedHeatmap).map((d) => (
+                <InfoWindow
+                  key={`info-${d.id}`}
+                  position={{ lat: parseFloat(d.latitude || d.lat || 5.185), lng: parseFloat(d.longitude || d.lng || 96.69) }}
+                  onCloseClick={() => setSelectedHeatmap(null)}
+                >
+                  <div className="text-sm">
+                    <strong>{d.nama}</strong><br />
+                    {d.laporan_kamtibmas_count || 0} laporan kamtibmas
+                  </div>
+                </InfoWindow>
+              ))}
+            </GoogleMap>
+            {!gmapsLoaded && (
+              <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-sm text-gray-400">
+                Memuat peta...
+              </div>
+            )}
           </div>
         </Card>
 
