@@ -134,7 +134,7 @@ export default function DesaDashboard() {
           </ChartCard>
         )}
 
-        <Card title="AI Insight">
+        <Card title="Insight Keamanan">
           {aiLoading ? (
             <LoadingSpinner size="sm" className="py-6" />
           ) : aiInsight?.insight ? (
@@ -143,7 +143,13 @@ export default function DesaDashboard() {
                 Periode: {aiInsight.periode?.start} s/d {aiInsight.periode?.end}
               </div>
               <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {aiInsight.insight}
+                {aiInsight.insight
+                  .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '')
+                  .replace(/\*\*(.*?)\*\*/g, '$1')
+                  .replace(/^[\d]+\.\s*/gm, '')
+                  .replace(/^[-•]\s*/gm, '')
+                  .replace(/\n{3,}/g, '\n\n')
+                  .trim()}
               </div>
             </div>
           ) : (
@@ -152,9 +158,9 @@ export default function DesaDashboard() {
               <button
                 onClick={handleGenerateInsight}
                 disabled={aiGenerating}
-                className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {aiGenerating ? 'Generating...' : 'Generate Insight'}
+                {aiGenerating ? 'Memproses...' : 'Muat Insight'}
               </button>
             </div>
           )}
