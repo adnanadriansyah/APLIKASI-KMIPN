@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getWarga, createWarga, updateWarga, deleteWarga, getDusuns } from '../../api/warga'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 export default function ManajemenWarga() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [dusuns, setDusuns] = useState([])
   const [loading, setLoading] = useState(true)
@@ -70,10 +72,10 @@ export default function ManajemenWarga() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.nama.trim() || !form.email.trim() || !form.dusun_id) {
-      return alert('Nama, email, dan lingkungan wajib diisi')
+      return toast.error('Nama, email, dan lingkungan wajib diisi')
     }
     if (!editId && !form.password) {
-      return alert('Password wajib diisi untuk warga baru')
+      return toast.error('Password wajib diisi untuk warga baru')
     }
 
     setSubmitting(true)
@@ -105,9 +107,9 @@ export default function ManajemenWarga() {
       const errors = err.response?.data?.errors
       if (errors) {
         const first = Object.values(errors)[0]
-        alert('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
+        toast.error('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
       } else {
-        alert('Gagal: ' + msg)
+        toast.error('Gagal: ' + msg)
       }
     } finally {
       setSubmitting(false)
@@ -122,7 +124,7 @@ export default function ManajemenWarga() {
       setDeleteId(null)
       fetchData(page, search)
     } catch (e) {
-      alert('Gagal menghapus: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal menghapus: ' + (e.response?.data?.message || e.message))
     } finally {
       setDeleting(false)
     }

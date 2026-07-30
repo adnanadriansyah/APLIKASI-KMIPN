@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getKamtibmas, getKamtibmasDetail, updateKamtibmasStatus } from '../../api/kamtibmas'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 const STATUS_OPTIONS = [
   { value: 'baru', label: 'Baru', color: 'danger' },
@@ -11,6 +12,7 @@ const STATUS_OPTIONS = [
 const URGENCY_COLOR = { rendah: 'success', sedang: 'warning', tinggi: 'danger' }
 
 export default function ManajemenLaporan() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -44,7 +46,7 @@ export default function ManajemenLaporan() {
       const res = await getKamtibmasDetail(id)
       setDetail(res.data)
     } catch (e) {
-      alert('Gagal memuat detail: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal memuat detail: ' + (e.response?.data?.message || e.message))
       setDetailOpen(false)
     } finally {
       setDetailLoading(false)
@@ -58,7 +60,7 @@ export default function ManajemenLaporan() {
       setDetail((prev) => prev ? { ...prev, status: newStatus, status_label: STATUS_OPTIONS.find((s) => s.value === newStatus)?.label || newStatus } : prev)
       fetchData(page, statusFilter)
     } catch (e) {
-      alert('Gagal update status: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal update status: ' + (e.response?.data?.message || e.message))
     } finally {
       setUpdating(false)
     }

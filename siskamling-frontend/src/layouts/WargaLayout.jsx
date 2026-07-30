@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import TopBar from '../components/TopBar'
 import { Home, Moon, AlertOctagon, House, Siren } from 'lucide-react'
@@ -22,13 +22,7 @@ const navGroups = [
 ]
 
 export default function WargaLayout() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
+  const { user } = useAuth()
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -73,7 +67,7 @@ export default function WargaLayout() {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar user={user} onLogout={handleLogout} />
+        <TopBar />
         <main className="flex-1 overflow-y-auto">
           <div className="p-6">
             <Outlet />

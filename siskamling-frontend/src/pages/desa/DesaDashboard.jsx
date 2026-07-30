@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDesaSummary, getAiInsight, generateAiInsight } from '../../api/dashboard'
 import { Card, ChartCard, StatCard, ProgressBar, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 import { Users, Home, ShieldCheck, AlertTriangle } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -18,6 +19,7 @@ export default function DesaDashboard() {
   const [aiLoading, setAiLoading] = useState(true)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
+  const toast = useToast()
 
   useEffect(() => {
     getDesaSummary()
@@ -35,9 +37,9 @@ export default function DesaDashboard() {
     setAiGenerating(true)
     try {
       await generateAiInsight()
-      alert('Insight sedang digenerate. Coba beberapa saat lagi.')
+      toast.success('Insight sedang digenerate. Coba beberapa saat lagi.')
     } catch (e) {
-      alert('Gagal: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal: ' + (e.response?.data?.message || e.message))
     } finally {
       setAiGenerating(false)
     }

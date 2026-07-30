@@ -4,6 +4,7 @@ import { getPolsekSummary } from '../../api/dashboard'
 import { respondPanic, completePanic, getActivePanics } from '../../api/panic'
 import { usePanicAlerts } from '../../firebase/usePanicAlerts'
 import { Card, ChartCard, StatCard, ProgressBar, Badge, Table, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
 import { AlertTriangle, FileText, Shield, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
@@ -12,7 +13,7 @@ import 'leaflet/dist/leaflet.css'
 function FitBounds({ points }) {
   const map = useMap()
   useEffect(() => {
-    if (points.length > 0) {
+    if (points.length > 0 && points[0].latitude && points[0].longitude) {
       const bounds = points.map((p) => [p.latitude, p.longitude])
       map.fitBounds(bounds, { padding: [40, 40] })
     }
@@ -41,12 +42,15 @@ export default function PolsekDashboard() {
       .catch(() => {})
   }, [])
 
+  const toast = useToast()
+
   const handleRespondPanic = async (id) => {
     try {
       await respondPanic(id)
       setRestAlerts((prev) => prev.map((a) => a.id === id ? { ...a, status: 'direspon' } : a))
+      toast.success('Panic alert berhasil direspon')
     } catch (e) {
-      alert('Gagal merespon: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal merespon: ' + (e.response?.data?.message || e.message))
     }
   }
 
@@ -54,8 +58,9 @@ export default function PolsekDashboard() {
     try {
       await completePanic(id)
       setRestAlerts((prev) => prev.filter((a) => a.id !== id))
+      toast.success('Panic alert selesai')
     } catch (e) {
-      alert('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
     }
   }
 
@@ -135,15 +140,17 @@ export default function PolsekDashboard() {
           <div className="h-[320px] rounded-lg overflow-hidden">
             <MapContainer center={[5.1850, 96.6900]} zoom={13} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
               <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              {heatmapPoints.length > 0 && <FitBounds points={heatmapPoints.map(() => ({ latitude: 5.185, longitude: 96.69 }))} />}
-              {data.heatmap_kamtibmas?.map((d) => {
+              {heatmapPoints.length > 0 && <FitBounds points={heatmapPoints} />}
+              {heatmapPoints.map((d) => {
                 const count = d.laporan_kamtibmas_count || 0
                 const radius = Math.min(8 + count * 3, 30)
                 const color = count >= 5 ? '#ef4444' : count >= 2 ? '#f59e0b' : '#3b82f6'
+                const lat = d.latitude || d.lat || 5.185
+                const lng = d.longitude || d.lng || 96.69
                 return (
                   <CircleMarker
                     key={d.id}
-                    center={[5.185 + (d.id * 0.003), 96.69 + (d.id * 0.002)]}
+                    center={[lat, lng]}
                     radius={radius}
                     fillColor={color}
                     color={color}

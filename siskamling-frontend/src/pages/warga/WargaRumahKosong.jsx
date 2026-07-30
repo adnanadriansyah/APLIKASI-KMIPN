@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getRumahKosong, createRumahKosong } from '../../api/rumahKosong'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 export default function WargaRumahKosong() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -37,10 +39,10 @@ export default function WargaRumahKosong() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!alamat.trim()) return alert('Alamat rumah wajib diisi')
-    if (!tanggalBerangkat) return alert('Tanggal berangkat wajib diisi')
-    if (!tanggalPulang) return alert('Tanggal pulang wajib diisi')
-    if (tanggalPulang <= tanggalBerangkat) return alert('Tanggal pulang harus setelah tanggal berangkat')
+    if (!alamat.trim()) return toast.error('Alamat rumah wajib diisi')
+    if (!tanggalBerangkat) return toast.error('Tanggal berangkat wajib diisi')
+    if (!tanggalPulang) return toast.error('Tanggal pulang wajib diisi')
+    if (tanggalPulang <= tanggalBerangkat) return toast.error('Tanggal pulang harus setelah tanggal berangkat')
 
     setSubmitting(true)
     try {
@@ -50,7 +52,7 @@ export default function WargaRumahKosong() {
         tanggal_pulang: tanggalPulang,
         kontak_darurat: kontakDarurat.trim() || undefined,
       })
-      alert('Laporan rumah kosong berhasil dibuat!')
+      toast.success('Laporan rumah kosong berhasil dibuat!')
       setFormOpen(false)
       resetForm()
       fetchData(1)
@@ -60,9 +62,9 @@ export default function WargaRumahKosong() {
       const errors = err.response?.data?.errors
       if (errors) {
         const first = Object.values(errors)[0]
-        alert('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
+        toast.error('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
       } else {
-        alert('Gagal: ' + msg)
+        toast.error('Gagal: ' + msg)
       }
     } finally {
       setSubmitting(false)

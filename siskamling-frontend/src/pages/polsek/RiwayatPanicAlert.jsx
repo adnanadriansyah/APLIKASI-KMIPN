@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getPanicHistory, respondPanic, completePanic } from '../../api/panic'
 import { Card, Table, Badge, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 export default function RiwayatPanicAlert() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -29,7 +31,7 @@ export default function RiwayatPanicAlert() {
       await respondPanic(id)
       fetchData(page, statusFilter)
     } catch (e) {
-      alert('Gagal merespon: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal merespon: ' + (e.response?.data?.message || e.message))
     }
   }
 
@@ -38,7 +40,7 @@ export default function RiwayatPanicAlert() {
       await completePanic(id)
       fetchData(page, statusFilter)
     } catch (e) {
-      alert('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal selesaikan: ' + (e.response?.data?.message || e.message))
     }
   }
 

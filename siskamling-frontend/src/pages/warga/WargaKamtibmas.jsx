@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getKamtibmas, createKamtibmas } from '../../api/kamtibmas'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 const KATEGORI = [
   { key: 'pencurian', label: 'Pencurian', icon: '🔍', color: 'border-red-300 bg-red-50 hover:bg-red-100' },
@@ -12,6 +13,7 @@ const KATEGORI = [
 ]
 
 export default function WargaKamtibmas() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -42,7 +44,7 @@ export default function WargaKamtibmas() {
   useEffect(() => { fetchData(page) }, [page, fetchData])
 
   const handleUseLocation = () => {
-    if (!navigator.geolocation) return alert('Geolocation tidak didukung')
+    if (!navigator.geolocation) return toast.error('Geolocation tidak didukung')
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -51,7 +53,7 @@ export default function WargaKamtibmas() {
         setLocating(false)
       },
       () => {
-        alert('Gagal mendapatkan lokasi')
+        toast.error('Gagal mendapatkan lokasi')
         setLocating(false)
       }
     )
@@ -74,8 +76,8 @@ export default function WargaKamtibmas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedKategori) return alert('Pilih kategori laporan')
-    if (kronologi.length < 10) return alert('Kronologi minimal 10 karakter')
+    if (!selectedKategori) return toast.error('Pilih kategori laporan')
+    if (kronologi.length < 10) return toast.error('Kronologi minimal 10 karakter')
 
     setSubmitting(true)
     try {
@@ -89,7 +91,7 @@ export default function WargaKamtibmas() {
       for (const f of videoFiles) fd.append('video[]', f)
 
       await createKamtibmas(fd)
-      alert('Laporan berhasil dikirim!')
+      toast.success('Laporan berhasil dikirim!')
       setFormOpen(false)
       resetForm()
       fetchData(1)
@@ -99,9 +101,9 @@ export default function WargaKamtibmas() {
       const errors = err.response?.data?.errors
       if (errors) {
         const first = Object.values(errors)[0]
-        alert('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
+        toast.error('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
       } else {
-        alert('Gagal: ' + msg)
+        toast.error('Gagal: ' + msg)
       }
     } finally {
       setSubmitting(false)

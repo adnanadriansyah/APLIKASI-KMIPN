@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             DusunSeeder::class,
             UserSeeder::class,
             LinmasSeeder::class,
+            DummyDataSeeder::class,
         ]);
     }
 }

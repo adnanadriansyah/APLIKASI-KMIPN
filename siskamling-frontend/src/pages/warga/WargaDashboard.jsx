@@ -5,6 +5,7 @@ import { getWargaSummary } from '../../api/dashboard'
 import { getJadwalRonda } from '../../api/ronda'
 import { triggerPanic } from '../../api/panic'
 import { Card, ChartCard, StatCard, LoadingSpinner, Badge } from '../../components'
+import { useToast } from '../../components/Toast'
 import { FileText, CalendarCheck, Home } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -20,6 +21,7 @@ export default function WargaDashboard() {
   const [jadwal, setJadwal] = useState([])
   const [loading, setLoading] = useState(true)
   const [panicLoading, setPanicLoading] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     Promise.all([
@@ -34,18 +36,18 @@ export default function WargaDashboard() {
   }, [])
 
   const handlePanic = () => {
-    if (!navigator.geolocation) return alert('Geolocation tidak didukung')
+    if (!navigator.geolocation) return toast.error('Geolocation tidak didukung')
     setPanicLoading(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords
         triggerPanic({ latitude, longitude })
-          .then(() => alert('Panic button berhasil dikirim! Bantuan segera datang.'))
-          .catch((e) => alert('Gagal: ' + (e.response?.data?.message || e.message)))
+          .then(() => toast.success('Panic button berhasil dikirim! Bantuan segera datang.'))
+          .catch((e) => toast.error('Gagal: ' + (e.response?.data?.message || e.message)))
           .finally(() => setPanicLoading(false))
       },
       () => {
-        alert('Gagal mendapatkan lokasi GPS')
+        toast.error('Gagal mendapatkan lokasi GPS')
         setPanicLoading(false)
       }
     )

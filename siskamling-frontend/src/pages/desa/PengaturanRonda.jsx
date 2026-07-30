@@ -3,11 +3,13 @@ import { getJadwalRonda, createJadwalRonda } from '../../api/ronda'
 import { getDusuns } from '../../api/warga'
 import { getWarga } from '../../api/warga'
 import { Card, Badge, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
 export default function PengaturanRonda() {
+  const toast = useToast()
   const [dusuns, setDusuns] = useState([])
   const [wargas, setWargas] = useState([])
   const [jadwal, setJadwal] = useState([])
@@ -69,7 +71,7 @@ export default function PengaturanRonda() {
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!formDate || formPetugas.length === 0) {
-      return alert('Pilih tanggal dan minimal 1 petugas')
+      return toast.error('Pilih tanggal dan minimal 1 petugas')
     }
 
     setSubmitting(true)
@@ -87,9 +89,9 @@ export default function PengaturanRonda() {
       const errors = err.response?.data?.errors
       if (errors) {
         const first = Object.values(errors)[0]
-        alert('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
+        toast.error('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
       } else {
-        alert('Gagal: ' + msg)
+        toast.error('Gagal: ' + msg)
       }
     } finally {
       setSubmitting(false)

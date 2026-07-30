@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { getLinmas, createLinmas, updateLinmas, deleteLinmas } from '../../api/linmas'
 import { Card, Table, Modal, LoadingSpinner } from '../../components'
+import { useToast } from '../../components/Toast'
 
 export default function ManajemenLinmas() {
+  const toast = useToast()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -53,7 +55,7 @@ export default function ManajemenLinmas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.nama.trim()) return alert('Nama wajib diisi')
+    if (!form.nama.trim()) return toast.error('Nama wajib diisi')
 
     setSubmitting(true)
     try {
@@ -77,9 +79,9 @@ export default function ManajemenLinmas() {
       const errors = err.response?.data?.errors
       if (errors) {
         const first = Object.values(errors)[0]
-        alert('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
+        toast.error('Validasi gagal: ' + (Array.isArray(first) ? first[0] : first))
       } else {
-        alert('Gagal: ' + msg)
+        toast.error('Gagal: ' + msg)
       }
     } finally {
       setSubmitting(false)
@@ -94,7 +96,7 @@ export default function ManajemenLinmas() {
       setDeleteId(null)
       fetchData(page)
     } catch (e) {
-      alert('Gagal menghapus: ' + (e.response?.data?.message || e.message))
+      toast.error('Gagal menghapus: ' + (e.response?.data?.message || e.message))
     } finally {
       setDeleting(false)
     }
