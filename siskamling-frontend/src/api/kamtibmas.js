@@ -21,3 +21,8 @@ export async function updateKamtibmasStatus(id, status) {
   const { data } = await api.put(`/api/kamtibmas/${id}/status`, { status })
   return data
 }
+
+export async function deleteKamtibmas(id) {
+  const { data } = await api.delete(`/api/kamtibmas/${id}`)
+  return data
+}

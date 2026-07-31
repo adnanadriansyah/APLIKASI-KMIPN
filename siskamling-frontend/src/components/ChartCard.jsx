@@ -25,6 +25,7 @@ export default function ChartCard({
   }
 
   const tabs = periods || PERIODS
+  const showTabs = !Array.isArray(periods) || periods.length > 0
 
   return (
     <Card
@@ -32,6 +33,7 @@ export default function ChartCard({
       subtitle={subtitle}
       className={className}
       actions={
+        showTabs && (
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
           {tabs.map((tab) => (
             <button
@@ -50,6 +52,7 @@ export default function ChartCard({
             </button>
           ))}
         </div>
+        )
       }
     >
       <div className="w-full" style={{ minHeight: 280 }}>

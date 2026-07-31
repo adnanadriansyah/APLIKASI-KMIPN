@@ -18,7 +18,7 @@ class FirebaseService
             $factory = (new Factory)->withServiceAccount(config('firebase.credentials'))
                 ->withDatabaseUri(config('firebase.database_url'));
 
-            $this->database = $factory->getDatabase();
+            $this->database = $factory->createDatabase();
         }
 
         return $this->database;

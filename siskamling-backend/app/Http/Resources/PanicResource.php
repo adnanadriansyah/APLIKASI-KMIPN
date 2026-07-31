@@ -19,6 +19,9 @@ class PanicResource extends JsonResource
             ],
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
+            'lokasi_text' => $this->latitude && $this->longitude
+                ? sprintf('%.6f, %.6f', $this->latitude, $this->longitude)
+                : null,
             'status' => $this->status,
             'responded_by' => $this->whenLoaded('respondedBy', fn () => [
                 'id' => $this->respondedBy->id,

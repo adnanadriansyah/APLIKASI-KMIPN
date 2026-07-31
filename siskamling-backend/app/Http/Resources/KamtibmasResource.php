@@ -15,6 +15,7 @@ class KamtibmasResource extends JsonResource
                 'id' => $this->user->id,
                 'nama' => $this->user->nama,
                 'jabatan' => $this->user->jabatan,
+                'phone' => $this->user->phone,
             ],
             'dusun' => [
                 'id' => $this->dusun->id,

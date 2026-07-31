@@ -44,6 +44,16 @@ class KamtibmasController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($w) use ($search) {
+                $w->where('kronologi', 'like', "%{$search}%")
+                    ->orWhere('kategori', 'like', "%{$search}%")
+                    ->orWhere('lokasi_text', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('nama', 'like', "%{$search}%"));
+            });
+        }
+
         $perPage = min((int) $request->input('per_page', 15), 50);
         $laporan = $query->latest()->paginate($perPage);
 
@@ -120,6 +130,19 @@ class KamtibmasController extends Controller
             'message' => 'Status laporan kamtibmas berhasil diperbarui.',
             'data' => new KamtibmasResource($laporan),
         ]);
+    }
+
+    public function destroy(Request $request, $id): JsonResponse
+    {
+        $laporan = LaporanKamtibmas::findOrFail($id);
+
+        if (! $this->canAccess($request->user(), $laporan)) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        $laporan->delete();
+
+        return response()->json(['message' => 'Laporan kamtibmas berhasil dihapus.']);
     }
 
     private function uploadMedia(Request $request, string $inputName, string $type, int $laporanId): void

@@ -9,11 +9,14 @@ use App\Http\Resources\RumahKosongResource;
 use App\Models\LaporanRumahKosong;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class RumahKosongController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $this->autoCompleteOverdue();
+
         $user = $request->user();
         $role = $user->role->name;
 
@@ -31,6 +34,19 @@ class RumahKosongController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('dusun_id')) {
+            $query->whereHas('user', fn ($q) => $q->where('dusun_id', $request->dusun_id));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($w) use ($search) {
+                $w->where('alamat', 'like', "%{$search}%")
+                    ->orWhere('nama_penghuni', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($u) => $u->where('nama', 'like', "%{$search}%"));
+            });
         }
 
         $perPage = min((int) $request->input('per_page', 15), 50);
@@ -68,6 +84,8 @@ class RumahKosongController extends Controller
 
     public function show(Request $request, $id): JsonResponse
     {
+        $this->autoCompleteOverdue();
+
         $laporan = LaporanRumahKosong::with('user')->findOrFail($id);
 
         if (! $this->canAccess($request->user(), $laporan)) {
@@ -109,6 +127,14 @@ class RumahKosongController extends Controller
         return response()->json([
             'message' => 'Laporan rumah kosong berhasil dihapus.',
         ]);
+    }
+
+    private function autoCompleteOverdue(): void
+    {
+        LaporanRumahKosong::query()
+            ->where('status', 'aktif')
+            ->whereDate('tanggal_pulang', '<=', Carbon::today())
+            ->update(['status' => 'selesai']);
     }
 
     private function canAccess($user, $laporan): bool

@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getKamtibmas, createKamtibmas } from '../../api/kamtibmas'
+import { Search } from 'lucide-react'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
 import { useToast } from '../../components/Toast'
 
@@ -14,10 +16,12 @@ const KATEGORI = [
 
 export default function WargaKamtibmas() {
   const toast = useToast()
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState(null)
+  const [search, setSearch] = useState('')
 
   const [formOpen, setFormOpen] = useState(false)
   const [selectedKategori, setSelectedKategori] = useState('')
@@ -30,9 +34,11 @@ export default function WargaKamtibmas() {
   const [submitting, setSubmitting] = useState(false)
   const [locating, setLocating] = useState(false)
 
-  const fetchData = useCallback((p = 1) => {
+  const fetchData = useCallback((p = 1, q = '') => {
     setLoading(true)
-    getKamtibmas({ page: p, per_page: 10 })
+    const params = { page: p, per_page: 10 }
+    if (q) params.search = q
+    getKamtibmas(params)
       .then((res) => {
         setData(res.data || [])
         setMeta(res.meta || null)
@@ -41,7 +47,15 @@ export default function WargaKamtibmas() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { fetchData(page) }, [page, fetchData])
+  useEffect(() => { fetchData(page, search) }, [page, search, fetchData])
+
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) {
+      setSearch(q)
+      setPage(1)
+    }
+  }, [searchParams])
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) return toast.error('Geolocation tidak didukung')
@@ -94,7 +108,7 @@ export default function WargaKamtibmas() {
       toast.success('Laporan berhasil dikirim!')
       setFormOpen(false)
       resetForm()
-      fetchData(1)
+      fetchData(1, search)
       setPage(1)
     } catch (err) {
       const msg = err.response?.data?.message || err.message
@@ -125,14 +139,26 @@ export default function WargaKamtibmas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Laporan Kamtibmas</h1>
-        <button
-          onClick={() => setFormOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          + Buat Laporan
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              placeholder="Cari kronologi, kategori..."
+              className="pl-9 pr-4 py-2 text-sm bg-gray-100/80 border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:bg-white focus:border-blue-200 transition-all"
+            />
+          </div>
+          <button
+            onClick={() => setFormOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            + Buat Laporan
+          </button>
+        </div>
       </div>
 
       <Card>

@@ -14,3 +14,8 @@ export async function deleteRumahKosong(id) {
   const { data } = await api.delete(`/api/rumah-kosong/${id}`)
   return data
 }
+
+export async function updateRumahKosong(id, payload) {
+  const { data } = await api.put(`/api/rumah-kosong/${id}`, payload)
+  return data
+}

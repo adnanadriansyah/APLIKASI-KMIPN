@@ -24,7 +24,10 @@ export default function ScannerQR() {
 
   const [dusunId, setDusunId] = useState(user?.dusun_id || null)
   const [dusuns, setDusuns] = useState([])
-  const [tanggal, setTanggal] = useState(() => new Date().toISOString().split('T')[0])
+  const [tanggal, setTanggal] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
 
   const { presensi, loading: presensiLoading } = useRondaPresensi(dusunId, tanggal)
 
@@ -46,10 +49,12 @@ export default function ScannerQR() {
     try {
       const res = await scanQrCode(code)
       setScanResult(res)
+      if (res?.data?.tanggal) setTanggal(res.data.tanggal)
+      if (res?.data?.dusun?.id && !user?.dusun_id) setDusunId(res.data.dusun.id)
     } catch (e) {
       setScanError(e.response?.data?.message || 'Gagal memproses QR code')
     }
-  }, [])
+  }, [user?.dusun_id])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -158,11 +163,37 @@ export default function ScannerQR() {
             )}
 
             {scanResult && (
-              <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-                <Badge color="success">Berhasil</Badge>
-                <p className="text-sm text-gray-700 mt-2">
-                  Absensi tercatat untuk jadwal ronda.
-                </p>
+              <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Badge color="success">Berhasil</Badge>
+                  {scanResult.data?.scanned_at && (
+                    <span className="text-xs text-emerald-700 font-medium">
+                      {new Date(scanResult.data.scanned_at).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3 text-left">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {scanResult.data?.petugas?.nama || 'Absensi tercatat'}
+                    </div>
+                    <Badge color="success">Hadir</Badge>
+                  </div>
+                  {scanResult.data?.petugas?.jabatan && (
+                    <div className="text-xs text-gray-500">{scanResult.data.petugas.jabatan}</div>
+                  )}
+                  {scanResult.data?.dusun?.nama && (
+                    <div className="text-xs text-gray-500">
+                      Lingkungan {scanResult.data.dusun.nama}
+                      {scanResult.data.tanggal ? ` · ${scanResult.data.tanggal}` : ''}
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={restartCamera}
                   className="mt-3 text-sm text-blue-600 hover:underline"

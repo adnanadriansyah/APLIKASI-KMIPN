@@ -17,6 +17,7 @@ class RumahKosongResource extends JsonResource
                 'jabatan' => $this->user->jabatan,
             ],
             'alamat' => $this->alamat,
+            'nama_penghuni' => $this->nama_penghuni,
             'tanggal_berangkat' => $this->tanggal_berangkat->format('Y-m-d'),
             'tanggal_pulang' => $this->tanggal_pulang->format('Y-m-d'),
             'kontak_darurat' => $this->kontak_darurat,

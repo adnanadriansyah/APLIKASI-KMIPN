@@ -148,14 +148,21 @@ class PanicController extends Controller
     public function history(Request $request): JsonResponse
     {
         $user = $request->user();
-        $dusunIds = $user->getDusunIds();
+        $role = $user->role->name;
 
-        if (empty($dusunIds)) {
-            return response()->json(['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0]]);
+        $query = PanicButtonLog::with(['user', 'respondedBy', 'completedBy']);
+
+        if ($role === 'warga') {
+            $query->where('user_id', $user->id);
+        } else {
+            $dusunIds = $user->getDusunIds();
+
+            if (empty($dusunIds)) {
+                return response()->json(['data' => [], 'meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0]]);
+            }
+
+            $query->whereHas('user', fn ($q) => $q->whereIn('dusun_id', $dusunIds));
         }
-
-        $query = PanicButtonLog::with(['user', 'respondedBy', 'completedBy'])
-            ->whereHas('user', fn ($q) => $q->whereIn('dusun_id', $dusunIds));
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);

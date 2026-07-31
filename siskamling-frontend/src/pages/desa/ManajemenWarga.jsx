@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getWarga, createWarga, updateWarga, deleteWarga, getDusuns } from '../../api/warga'
 import { Card, Table, Badge, Modal, LoadingSpinner } from '../../components'
 import { useToast } from '../../components/Toast'
 
 export default function ManajemenWarga() {
   const toast = useToast()
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState([])
   const [dusuns, setDusuns] = useState([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +36,14 @@ export default function ManajemenWarga() {
   }, [])
 
   useEffect(() => { fetchData(page, search) }, [page, search, fetchData])
+
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q) {
+      setSearch(q)
+      setPage(1)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     getDusuns().then((res) => setDusuns(res.data || [])).catch(console.error)

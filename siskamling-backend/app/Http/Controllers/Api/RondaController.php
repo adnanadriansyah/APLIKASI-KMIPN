@@ -26,7 +26,7 @@ class RondaController extends Controller
         $user = $request->user();
         $role = $user->role->name;
 
-        $query = JadwalRonda::with(['dusun', 'jadwalRondaPetugas.user']);
+        $query = JadwalRonda::with(['dusun', 'jadwalRondaPetugas.user', 'jadwalRondaPetugas.qrcodeRonda']);
 
         if ($role === 'warga') {
             $query->whereHas('jadwalRondaPetugas', fn ($q) => $q->where('user_id', $user->id));
@@ -105,7 +105,7 @@ class RondaController extends Controller
             return $jadwal;
         });
 
-        $jadwal->load(['dusun', 'jadwalRondaPetugas.user']);
+        $jadwal->load(['dusun', 'jadwalRondaPetugas.user', 'jadwalRondaPetugas.qrcodeRonda']);
 
         return response()->json([
             'message' => 'Jadwal ronda berhasil dibuat.',
@@ -127,7 +127,10 @@ class RondaController extends Controller
         $existingQr = $petugas->qrcodeRonda;
         if ($existingQr) {
             if ($existingQr->is_used) {
-                return response()->json(['message' => 'QR code sudah digunakan.'], 409);
+                return response()->json([
+                    'message' => 'QR code sudah digunakan.',
+                    'data' => new QrcodeRondaResource($existingQr),
+                ], 409);
             }
             if (! $existingQr->expired_at || Carbon::now()->lessThan($existingQr->expired_at)) {
                 $existingQr->qrcode_svg = self::cleanSvg(QrCode::format('svg')->size(200)->generate($existingQr->code));
@@ -189,8 +192,29 @@ class RondaController extends Controller
         $qrcode->jadwalRondaPetugas->load('jadwalRonda.dusun', 'user');
         app(FirebaseService::class)->pushRondaPresensi($qrcode->jadwalRondaPetugas);
 
+        $petugas = $qrcode->jadwalRondaPetugas;
+        $jadwal = $petugas->jadwalRonda;
+        $tanggal = $jadwal->tanggal instanceof \Carbon\Carbon
+            ? $jadwal->tanggal->format('Y-m-d')
+            : $jadwal->tanggal;
+
         return response()->json([
             'message' => 'Absensi berhasil. Status kehadiran diperbarui.',
+            'data' => [
+                'petugas' => [
+                    'id' => $petugas->id,
+                    'nama' => $petugas->user->nama ?? null,
+                    'jabatan' => $petugas->user->jabatan ?? null,
+                ],
+                'status_hadir' => $petugas->status_hadir,
+                'scanned_at' => $qrcode->scanned_at?->toIso8601String(),
+                'dusun' => [
+                    'id' => $jadwal->dusun_id,
+                    'nama' => $jadwal->dusun->nama ?? null,
+                ],
+                'tanggal' => $tanggal,
+                'shift' => $jadwal->shift,
+            ],
         ]);
     }
 

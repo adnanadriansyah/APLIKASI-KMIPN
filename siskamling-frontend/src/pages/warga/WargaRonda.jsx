@@ -14,6 +14,8 @@ export default function WargaRonda() {
   const [qrError, setQrError] = useState(null)
   const [countdown, setCountdown] = useState(0)
   const timerRef = useRef(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailJadwal, setDetailJadwal] = useState(null)
 
   const fetchJadwal = useCallback((p = 1) => {
     setLoading(true)
@@ -82,11 +84,23 @@ export default function WargaRonda() {
     return 'info'
   }
 
+  const hadirCount = (r) => (r.petugas || []).filter((p) => p.status_hadir === 'hadir').length
+
   const columns = [
     { key: 'tanggal', label: 'Tanggal' },
     { key: 'shift', label: 'Shift', render: (r) => shiftLabel(r.shift) },
     { key: 'dusun', label: 'Lingkungan', render: (r) => r.dusun?.nama },
-    { key: 'petugas', label: 'Petugas', render: (r) => `${r.petugas?.length || 0} orang` },
+    {
+      key: 'petugas', label: 'Petugas',
+      render: (r) => (
+        <button
+          onClick={() => { setDetailJadwal(r); setDetailOpen(true) }}
+          className="text-blue-600 hover:underline text-xs"
+        >
+          {hadirCount(r)}/{r.petugas?.length || 0} hadir
+        </button>
+      ),
+    },
     {
       key: 'status', label: 'Status',
       render: (r) => <Badge color={statusColor(r.status)}>{r.status}</Badge>,
@@ -94,11 +108,13 @@ export default function WargaRonda() {
     {
       key: 'aksi', label: 'Aksi',
       render: (r) => {
-        const petugasId = r.petugas?.[0]?.id
-        if (!petugasId) return <span className="text-xs text-gray-400">-</span>
+        const petugas = r.petugas?.[0]
+        if (!petugas?.id) return <span className="text-xs text-gray-400">-</span>
+        if (petugas.status_hadir === 'hadir') return <Badge color="success">Hadir</Badge>
+        if (r.status === 'selesai') return <span className="text-xs text-gray-400">Selesai</span>
         return (
           <button
-            onClick={() => handleGenerateQR(petugasId)}
+            onClick={() => handleGenerateQR(petugas.id)}
             disabled={qrLoading}
             className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
@@ -148,6 +164,25 @@ export default function WargaRonda() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 text-center">
             {qrError}
           </div>
+        ) : qrData?.is_used ? (
+          <div className="text-center py-2">
+            <div className="flex justify-center">
+              <Badge color="success">Sudah Discan</Badge>
+            </div>
+            <p className="text-sm font-semibold text-gray-900 mt-3">Presensi telah tercatat</p>
+            {qrData.scanned_at && (
+              <p className="text-xs text-gray-500 mt-1">
+                Discan pada{' '}
+                {new Date(qrData.scanned_at).toLocaleString('id-ID', {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                })}
+              </p>
+            )}
+            <p className="text-xs text-gray-400 mt-2">
+              QR ini sudah digunakan untuk presensi kehadiran.
+            </p>
+          </div>
         ) : qrData?.qrcode_svg ? (
           <div className="flex flex-col items-center gap-4">
             <div
@@ -174,6 +209,64 @@ export default function WargaRonda() {
             <p className="text-xs text-gray-400 mt-1">Data QR tidak ditemukan dalam response</p>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        isOpen={detailOpen}
+        onClose={() => { setDetailOpen(false); setDetailJadwal(null) }}
+        title="Detail Jadwal Ronda"
+        size="lg"
+      >
+        {detailJadwal && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div>
+                <div className="text-xs text-gray-400">Tanggal</div>
+                <div className="font-medium text-gray-900">{detailJadwal.tanggal}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400">Shift</div>
+                <div className="font-medium text-gray-900">{shiftLabel(detailJadwal.shift)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400">Lingkungan</div>
+                <div className="font-medium text-gray-900">{detailJadwal.dusun?.nama || '-'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400">Status</div>
+                <Badge color={statusColor(detailJadwal.status)}>{detailJadwal.status}</Badge>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-400 mb-2">
+                Daftar Petugas ({hadirCount(detailJadwal)}/{detailJadwal.petugas?.length || 0} hadir)
+              </div>
+              <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                {(detailJadwal.petugas || []).map((p) => (
+                  <div key={p.id} className="flex items-center justify-between py-2.5 px-3">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{p.user?.nama || '-'}</div>
+                      <div className="text-xs text-gray-500">{p.user?.jabatan || '-'}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {p.scanned_at && (
+                        <span className="text-xs text-gray-400">
+                          {new Date(p.scanned_at).toLocaleTimeString('id-ID', {
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </span>
+                      )}
+                      <Badge color={p.status_hadir === 'hadir' ? 'success' : 'neutral'}>
+                        {p.status_hadir === 'hadir' ? 'Hadir' : (p.status_hadir || 'Dijadwalkan')}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

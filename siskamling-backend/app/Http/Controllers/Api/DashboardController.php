@@ -71,7 +71,9 @@ class DashboardController extends Controller
 
         $heatmap = Dusun::whereIn('id', $dusunIds)
             ->withCount('laporanKamtibmas')
-            ->get(['id', 'nama', 'laporan_kamtibmas_count']);
+            ->withAvg('laporanKamtibmas', 'latitude')
+            ->withAvg('laporanKamtibmas', 'longitude')
+            ->get(['id', 'nama', 'laporan_kamtibmas_count', 'laporan_kamtibmas_avg_latitude', 'laporan_kamtibmas_avg_longitude']);
 
         $rondaPerDusun = Dusun::whereIn('id', $dusunIds)
             ->withCount(['jadwalRondas' => fn ($q) => $q->whereYear('tanggal', now()->year)->whereMonth('tanggal', now()->month)])

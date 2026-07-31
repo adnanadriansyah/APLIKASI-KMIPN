@@ -1,6 +1,8 @@
 export default function Card({ title, subtitle, children, className = '', actions }) {
   return (
-    <div className={`rounded-xl bg-white shadow-sm border border-gray-100 p-6 ${className}`}>
+    <div
+      className={`rounded-2xl bg-white border border-gray-100/80 shadow-sm p-6 transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/70 ${className}`}
+    >
       {(title || actions) && (
         <div className="flex items-center justify-between mb-4">
           <div>

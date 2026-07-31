@@ -17,37 +17,37 @@ export default function SplashScreen({ isVisible }) {
               {/* Rotating circle border — pure CSS smooth spin */}
               <svg
                 className="absolute"
-                width="140"
-                height="140"
-                viewBox="0 0 140 140"
+                width="176"
+                height="176"
+                viewBox="0 0 176 176"
                 style={{ animation: 'splashSpin 1.5s linear infinite' }}
               >
                 <circle
-                  cx="70"
-                  cy="70"
-                  r="64"
+                  cx="88"
+                  cy="88"
+                  r="82"
                   fill="none"
                   stroke="#e2e8f0"
                   strokeWidth="3"
                 />
                 <circle
-                  cx="70"
-                  cy="70"
-                  r="64"
+                  cx="88"
+                  cy="88"
+                  r="82"
                   fill="none"
                   stroke="#2563eb"
                   strokeWidth="3"
-                  strokeDasharray="100 302"
+                  strokeDasharray="129 386"
                   strokeLinecap="round"
                 />
               </svg>
 
               {/* Inner circle bg */}
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 shadow-inner md:h-28 md:w-28">
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-slate-100 shadow-inner md:h-36 md:w-36">
                 <img
                   src={iconApp}
                   alt="SiKamling Digital"
-                  className="h-14 w-14 md:h-16 md:w-16"
+                  className="h-24 w-24 md:h-28 md:w-28"
                   style={{ animation: 'splashBreathe 2s ease-in-out infinite' }}
                 />
               </div>

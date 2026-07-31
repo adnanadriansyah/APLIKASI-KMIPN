@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LinmasController;
 use App\Http\Controllers\Api\PanicController;
 use App\Http\Controllers\Api\RondaController;
 use App\Http\Controllers\Api\RumahKosongController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
+    Route::get('/search', [SearchController::class, 'index']);
 
     Route::prefix('ronda')->group(function () {
         Route::get('/jadwal', [RondaController::class, 'index']);
@@ -39,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [KamtibmasController::class, 'store']);
         Route::get('/{id}', [KamtibmasController::class, 'show']);
         Route::put('/{id}/status', [KamtibmasController::class, 'updateStatus'])
+            ->middleware('role:aparatur_desa,polsek');
+        Route::delete('/{id}', [KamtibmasController::class, 'destroy'])
             ->middleware('role:polsek');
     });
 
@@ -60,7 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:warga');
         Route::get('/active', [PanicController::class, 'active']);
         Route::get('/history', [PanicController::class, 'history'])
-            ->middleware('role:polsek');
+            ->middleware('role:warga,polsek');
         Route::put('/{id}/respond', [PanicController::class, 'respond'])
             ->middleware('role:polsek');
         Route::put('/{id}/complete', [PanicController::class, 'complete'])

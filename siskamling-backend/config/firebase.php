@@ -11,7 +11,21 @@ return [
     | (Project Settings > Service Accounts > Generate New Private Key).
     |
     */
-    'credentials' => env('FIREBASE_CREDENTIALS', base_path('firebase-credentials.json')),
+    'credentials' => (function () {
+        $value = env('FIREBASE_CREDENTIALS');
+
+        if (! $value) {
+            return base_path('firebase-credentials.json');
+        }
+
+        // Absolute path (unix '/', windows 'C:\') -> pakai langsung.
+        if (str_starts_with($value, '/') || preg_match('/^[A-Za-z]:[\\\\\/]/', $value)) {
+            return $value;
+        }
+
+        // Relative path -> resolve dari base_path agar tidak bergantung CWD.
+        return base_path($value);
+    })(),
 
     /*
     |--------------------------------------------------------------------------

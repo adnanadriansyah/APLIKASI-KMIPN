@@ -12,7 +12,7 @@ class LaporanRumahKosong extends Model
 
     protected $table = 'laporan_rumah_kosongs';
 
-    protected $fillable = ['user_id', 'alamat', 'tanggal_berangkat', 'tanggal_pulang', 'kontak_darurat', 'status'];
+    protected $fillable = ['user_id', 'alamat', 'nama_penghuni', 'tanggal_berangkat', 'tanggal_pulang', 'kontak_darurat', 'status'];
 
     protected function casts(): array
     {

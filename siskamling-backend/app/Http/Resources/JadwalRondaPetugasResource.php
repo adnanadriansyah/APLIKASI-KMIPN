@@ -17,6 +17,8 @@ class JadwalRondaPetugasResource extends JsonResource
                 'jabatan' => $this->user->jabatan,
             ],
             'status_hadir' => $this->status_hadir,
+            'qr_generated' => $this->qrcodeRonda !== null,
+            'scanned_at' => $this->qrcodeRonda?->scanned_at?->toIso8601String(),
         ];
     }
 }
