@@ -71,8 +71,11 @@ export default function ManajemenLaporan() {
     setUpdating(true)
     try {
       await updateKamtibmasStatus(id, newStatus)
-      setDetail((prev) => prev ? { ...prev, status: newStatus, status_label: STATUS_OPTIONS.find((s) => s.value === newStatus)?.label || newStatus } : prev)
+      const statusLabel = STATUS_OPTIONS.find((s) => s.value === newStatus)?.label || newStatus
+      setDetail((prev) => prev ? { ...prev, status: newStatus, status_label: statusLabel } : prev)
       fetchData(page, statusFilter, search)
+      toast.success(newStatus === 'selesai' ? 'Laporan selesai ditangani' : 'Laporan sedang diproses')
+      setTimeout(() => setDetailOpen(false), 700)
     } catch (e) {
       toast.error('Gagal update status: ' + (e.response?.data?.message || e.message))
     } finally {

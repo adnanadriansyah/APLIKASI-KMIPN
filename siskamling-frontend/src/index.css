@@ -36,6 +36,11 @@
   100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-150%) skewX(-12deg); }
+  100% { transform: translateX(400%) skewX(-12deg); }
+}
+
 .animate-fade-up { animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .animate-fade-in { animation: fade-in 0.5s ease-out both; }
 .animate-scale-in { animation: scale-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -43,3 +48,4 @@
 .animate-pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
 .animate-floaty { animation: floaty 5s ease-in-out infinite; }
 .animate-sos-ring { animation: sos-ring 1.6s cubic-bezier(0.66, 0, 0, 1) infinite; }
+.animate-shimmer { animation: shimmer 4.5s cubic-bezier(0.22, 1, 0.36, 1) infinite; }

@@ -21,7 +21,7 @@ export default function ProgressBar({ items = [], className = '' }) {
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  className={`h-full rounded-full transition-all duration-300 ${item.barClass || 'bg-blue-500'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>

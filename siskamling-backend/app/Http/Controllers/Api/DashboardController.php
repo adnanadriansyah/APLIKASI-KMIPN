@@ -86,21 +86,33 @@ class DashboardController extends Controller
         $kategoriBreakdown = $this->getKategoriBreakdown($dusunIds);
         $statusBreakdown = $this->getStatusBreakdown($dusunIds);
 
+        $laporanBulanIni = LaporanKamtibmas::whereIn('dusun_id', $dusunIds)
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
+        $panicAktif = PanicButtonLog::whereIn('dusun_id', $dusunIds)
+            ->where('status', 'terkirim')
+            ->count();
+
+        $skorKeamanan = max(0, min(100, 100 - ($laporanBulanIni * 2) - ($panicAktif * 5)));
+
         return response()->json([
             'data' => [
                 'polsek' => ['id' => $polsek->id, 'nama' => $polsek->nama],
                 'stats' => [
                     'total_laporan_kamtibmas' => LaporanKamtibmas::whereIn('dusun_id', $dusunIds)->count(),
-                    'laporan_bulan_ini' => LaporanKamtibmas::whereIn('dusun_id', $dusunIds)
-                        ->whereYear('created_at', now()->year)
-                        ->whereMonth('created_at', now()->month)
-                        ->count(),
-                    'panic_aktif' => PanicButtonLog::whereIn('dusun_id', $dusunIds)
-                        ->where('status', 'terkirim')
-                        ->count(),
+                    'laporan_bulan_ini' => $laporanBulanIni,
+                    'panic_aktif' => $panicAktif,
                     'total_linmas' => $linmas->count(),
+                    'skor_keamanan' => $skorKeamanan,
                 ],
                 'heatmap_kamtibmas' => $heatmap,
+                'laporan_terbaru' => LaporanKamtibmas::whereIn('dusun_id', $dusunIds)
+                    ->with('dusun:id,nama')
+                    ->latest()
+                    ->take(5)
+                    ->get(['id', 'kategori', 'lokasi_text', 'kronologi', 'status', 'dusun_id', 'created_at']),
                 'ronda_bulan_ini' => $rondaPerDusun,
                 'anggota_linmas' => $linmas,
                 'kamtibmas_trend_12_bulan' => $trend12Bulan,

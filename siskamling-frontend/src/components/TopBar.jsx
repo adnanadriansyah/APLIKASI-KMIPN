@@ -268,7 +268,7 @@ export default function TopBar() {
                 </div>
                 <div className="my-1 border-t border-gray-50" />
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <Mail size={16} strokeWidth={1.5} className="text-gray-400" />
